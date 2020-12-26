@@ -28,15 +28,15 @@ pub fn evolve<R, S, C, CS, M, MS>(
     elitism: usize,
     crossover_inputs: usize,
     crossover: C,
-    crossover_settings: &mut CS,
+    crossover_settings: &CS,
     mutate: M,
-    mutate_settings: &mut MS,
+    mutate_settings: &MS,
 ) -> Vec<S>
 where
     S: Clone,
     R: Rng + ?Sized,
-    C: Fn(&mut R, &[&S], &mut SpecimenWriter<S>, &mut CS),
-    M: Fn(&mut R, &mut S, &mut MS),
+    C: Fn(&mut R, &[&S], &mut SpecimenWriter<S>, &CS, &mut Vec<usize>),
+    M: Fn(&mut R, &mut S, &MS),
 {
     assert_eq!(population.len(), fitness.len());
 
@@ -50,6 +50,7 @@ where
     add_elitism_members(&mut output_writer, population, fitness, elitism);
 
     let mut crossover_input_buffer = Vec::with_capacity(crossover_inputs);
+    let mut crossover_weight_index_buffer = Vec::new();
 
     // TODO: Proper error handling
     let fitness_alias_table = WeightedIndex::new(Vec::from(fitness)).unwrap();
@@ -73,6 +74,7 @@ where
             &crossover_input_buffer,
             &mut output_writer,
             crossover_settings,
+            &mut crossover_weight_index_buffer,
         );
     }
 

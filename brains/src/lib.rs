@@ -1,3 +1,4 @@
+pub mod config;
 pub mod error;
 pub mod gen;
 pub mod nn;
@@ -11,51 +12,10 @@ use std::{
     slice,
 };
 
+use config::{Config, ConfigTemplate};
 use error::BrainsError;
-use gen::SelectionMethod;
 use libc::{c_char, c_double};
-use nn::{
-    gen::{
-        CrossoverSettings, CrossoverSettingsTemplate, MutationSettings, MutationSettingsTemplate,
-    },
-    NeuralNetwork, NeuralNetworkTemplate,
-};
 use rand::prelude::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(Deserialize, Serialize)]
-struct ConfigTemplate {
-    population_size: usize,
-    min_weight: f64,
-    max_weight: f64,
-    elitism: f64,
-    network: NeuralNetworkTemplate,
-    selection_method: SelectionMethod,
-    crossover: CrossoverSettingsTemplate,
-    mutation: MutationSettingsTemplate,
-}
-
-impl Default for ConfigTemplate {
-    fn default() -> Self {
-        ConfigTemplate {
-            population_size: 200,
-            min_weight: -1.0,
-            max_weight: 1.0,
-            elitism: 0.02,
-            network: Default::default(),
-            selection_method: Default::default(),
-            crossover: Default::default(),
-            mutation: Default::default(),
-        }
-    }
-}
-
-struct Config {
-    elitism: usize,
-    crossover: CrossoverSettings,
-    mutation: MutationSettings,
-    selection_method: SelectionMethod,
-}
 
 pub struct Population {
     members: Vec<nn::NeuralNetwork>,
@@ -121,52 +81,19 @@ pub unsafe extern "C" fn build_population_from_config(
         Err(_) => return with_last_error(BrainsError::InvalidConfigPath),
     };
 
-    let ConfigTemplate {
-        population_size,
-        min_weight,
-        max_weight,
-        elitism,
-        network,
-        crossover,
-        mutation,
-        selection_method,
-    } = match serde_json::from_str(&config_json) {
+    let config_template: ConfigTemplate = match serde_json::from_str(&config_json) {
         Ok(config) => config,
         Err(e) => {
             return with_last_error_extended(BrainsError::InvalidConfigJson, e);
         }
     };
 
-    if population_size == 0 {
-        return with_last_error(BrainsError::PopulationSizeZero);
-    }
-
-    if max_weight < min_weight {
-        return with_last_error(BrainsError::MinWeightLargerThanMaxWeight);
-    }
-
-    if elitism < 0.0 || elitism > 1.0 {
-        return with_last_error(BrainsError::InvalidElitismRatio);
-    }
-
-    let elitism = (elitism * population_size as f64).trunc() as usize;
-
-    let network = match NeuralNetwork::from_template(&network) {
-        Ok(network) => network,
+    let config = match Config::build_from_template(&config_template) {
+        Ok(c) => c,
         Err(e) => return with_last_error(e),
     };
 
-    let mut members = vec![network; population_size];
-
-    let crossover = match CrossoverSettings::new(crossover, &members[0]) {
-        Ok(crossover) => crossover,
-        Err(e) => return with_last_error(e),
-    };
-
-    let mutation = match MutationSettings::new(mutation, &members[0]) {
-        Ok(mutation) => mutation,
-        Err(e) => return with_last_error(e),
-    };
+    let mut members = vec![config.network().clone(); config_template.population_size];
 
     // Shuffle network weight according to config
     let mut rng = thread_rng();
@@ -174,20 +101,12 @@ pub unsafe extern "C" fn build_population_from_config(
     for nn in &mut members {
         for nn_layer in nn.layers_mut() {
             for nn_weight in nn_layer.all_weights_mut() {
-                *nn_weight = rng.gen_range(min_weight, max_weight);
+                *nn_weight = rng.gen_range(config_template.min_weight, config_template.max_weight);
             }
         }
     }
 
-    let population_box = Box::new(Population {
-        members,
-        config: Config {
-            elitism,
-            crossover,
-            mutation,
-            selection_method,
-        },
-    });
+    let population_box = Box::new(Population { members, config });
 
     *count = population_box.members.len();
     *inputs = population_box.members[0].input_count();
@@ -249,13 +168,13 @@ pub unsafe extern "C" fn evolve_population(
         &mut rng,
         &population.members,
         fitness,
-        population.config.selection_method,
-        population.config.elitism,
+        population.config.selection_method(),
+        population.config.elitism(),
         2,
         nn::gen::crossover,
-        &mut population.config.crossover,
+        population.config.crossover_settings(),
         nn::gen::mutate,
-        &mut population.config.mutation,
+        population.config.mutation_settings(),
     );
 
     // Also drops the old vector

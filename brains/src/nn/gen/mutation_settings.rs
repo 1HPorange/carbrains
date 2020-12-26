@@ -3,7 +3,7 @@ use rand::distributions::weighted::alias_method::WeightedIndex;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct MutationSettingsTemplate {
     pub mutation_probability: f64,
     pub min_weights_affected_ratio: f64,
@@ -43,11 +43,11 @@ pub struct MutationSettings {
     mutation_probability: f64,
     min_weights_affected: usize,
     max_weights_affected: usize,
-    method: WeightedIndex<f64>,
-    template: MutationSettingsTemplate,
+    methods: Vec<MutationMethod>,
+    method_index: WeightedIndex<f64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct MutationMethodProbability {
     method: MutationMethod,
     relative_probability: f64,
@@ -63,7 +63,7 @@ pub enum MutationMethod {
 
 impl MutationSettings {
     pub fn new(
-        template: MutationSettingsTemplate,
+        template: &MutationSettingsTemplate,
         nn: &NeuralNetwork,
     ) -> Result<MutationSettings, BrainsError> {
         Self::validate_template(&template)?;
@@ -78,7 +78,9 @@ impl MutationSettings {
             (template.min_weights_affected_ratio * total_weights).trunc() as usize;
         let max_weights_affected =
             (template.max_weights_affected_ratio * total_weights).trunc() as usize + 1;
-        let method = WeightedIndex::new(
+
+        let methods = template.methods.iter().map(|m| m.method).collect();
+        let method_index = WeightedIndex::new(
             template
                 .methods
                 .iter()
@@ -91,8 +93,8 @@ impl MutationSettings {
             mutation_probability: template.mutation_probability,
             min_weights_affected,
             max_weights_affected,
-            method,
-            template,
+            methods,
+            method_index,
         })
     }
 
@@ -105,7 +107,7 @@ impl MutationSettings {
     }
 
     pub fn gen_method<R: Rng + ?Sized>(&self, rng: &mut R) -> MutationMethod {
-        self.template.methods[self.method.sample(rng)].method
+        self.methods[self.method_index.sample(rng)]
     }
 
     fn validate_template(template: &MutationSettingsTemplate) -> Result<(), BrainsError> {

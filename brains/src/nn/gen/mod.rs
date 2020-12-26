@@ -13,7 +13,8 @@ pub fn crossover<R: Rng + ?Sized>(
     rng: &mut R,
     input: &[&NeuralNetwork],
     output: &mut SpecimenWriter<NeuralNetwork>,
-    settings: &mut CrossoverSettings,
+    settings: &CrossoverSettings,
+    weight_index_buffer: &mut Vec<usize>,
 ) {
     debug_assert!(input.len() == 2);
 
@@ -44,15 +45,12 @@ pub fn crossover<R: Rng + ?Sized>(
                     * rng.gen_range(min_weights_swapped_ratio, max_weights_swapped_ratio))
                 .trunc() as usize;
 
-                (0..node_weights).choose_multiple_fill(
-                    rng,
-                    &mut settings.node_index_buffer()[..weights_to_swap],
-                );
+                weight_index_buffer.clear();
+                weight_index_buffer.resize_with(weights_to_swap, Default::default);
 
-                for w_idx in settings.node_index_buffer()[..weights_to_swap]
-                    .iter()
-                    .copied()
-                {
+                (0..node_weights).choose_multiple_fill(rng, &mut weight_index_buffer[..]);
+
+                for w_idx in weight_index_buffer.iter().copied() {
                     mem::swap(&mut a_weights[w_idx], &mut b_weights[w_idx]);
                 }
             }
@@ -63,11 +61,7 @@ pub fn crossover<R: Rng + ?Sized>(
     output.write(b);
 }
 
-pub fn mutate<R: Rng + ?Sized>(
-    rng: &mut R,
-    nn: &mut NeuralNetwork,
-    settings: &mut MutationSettings,
-) {
+pub fn mutate<R: Rng + ?Sized>(rng: &mut R, nn: &mut NeuralNetwork, settings: &MutationSettings) {
     if rng.gen_range(0.0, 1.0) >= settings.mutation_probability() {
         return;
     }

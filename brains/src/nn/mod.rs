@@ -9,7 +9,7 @@ use std::{
     ops::Deref,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct NeuralNetworkTemplate {
     input_count: usize,
     layers: Vec<Vec<Activation>>,

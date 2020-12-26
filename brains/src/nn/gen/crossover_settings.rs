@@ -4,7 +4,7 @@ use super::*;
 use rand::{distributions::weighted::alias_method::WeightedIndex, prelude::*};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct CrossoverSettingsTemplate {
     pub min_nodes_affected_ratio: f64,
     pub max_nodes_affected_ratio: f64,
@@ -33,7 +33,7 @@ impl Default for CrossoverSettingsTemplate {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct CrossoverMethodProbability {
     pub method: CrossoverMethod,
     pub relative_probability: f64,
@@ -42,9 +42,9 @@ pub struct CrossoverMethodProbability {
 pub struct CrossoverSettings {
     min_nodes_affected: usize,
     max_nodes_affected: usize,
-    method_index: WeightedIndex<f64>,
     node_index_buffer: Box<[usize]>,
-    template: CrossoverSettingsTemplate,
+    methods: Vec<CrossoverMethod>,
+    method_index: WeightedIndex<f64>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy)]
@@ -58,7 +58,7 @@ pub enum CrossoverMethod {
 
 impl CrossoverSettings {
     pub fn new(
-        template: CrossoverSettingsTemplate,
+        template: &CrossoverSettingsTemplate,
         nn: &NeuralNetwork,
     ) -> Result<CrossoverSettings, BrainsError> {
         Self::validate_template(&template)?;
@@ -68,6 +68,8 @@ impl CrossoverSettings {
         let min_nodes_affected = (template.min_nodes_affected_ratio * total_nodes).trunc() as usize;
         let max_nodes_affected =
             (template.max_nodes_affected_ratio * total_nodes).trunc() as usize + 1;
+
+        let methods = template.methods.iter().map(|m| m.method).collect();
         let method_index = WeightedIndex::new(
             template
                 .methods
@@ -91,9 +93,9 @@ impl CrossoverSettings {
         Ok(CrossoverSettings {
             min_nodes_affected,
             max_nodes_affected,
-            method_index,
             node_index_buffer,
-            template,
+            methods,
+            method_index,
         })
     }
 
@@ -102,7 +104,7 @@ impl CrossoverSettings {
     }
 
     pub fn gen_method<R: Rng + ?Sized>(&self, rng: &mut R) -> CrossoverMethod {
-        self.template.methods[self.method_index.sample(rng)].method
+        self.methods[self.method_index.sample(rng)]
     }
 
     pub fn node_index_buffer(&mut self) -> &mut [usize] {
