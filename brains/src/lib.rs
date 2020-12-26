@@ -19,7 +19,7 @@ use rand::prelude::*;
 
 pub struct Population {
     members: Vec<nn::NeuralNetwork>,
-    config: Config,
+    config: Option<Config>,
 }
 
 static mut LAST_ERROR: Option<CString> = None;
@@ -106,7 +106,10 @@ pub unsafe extern "C" fn build_population_from_config(
         }
     }
 
-    let population_box = Box::new(Population { members, config });
+    let population_box = Box::new(Population {
+        members,
+        config: Some(config),
+    });
 
     *count = population_box.members.len();
     *inputs = population_box.members[0].input_count();
@@ -161,6 +164,10 @@ pub unsafe extern "C" fn evolve_population(
         Some(f) => slice::from_raw_parts(f.as_ptr(), population.members.len()),
         None => return with_last_error(BrainsError::FitnessPointerNull),
     };
+    let config = match &population.config {
+        Some(c) => c,
+        None => return with_last_error(BrainsError::MissingEvolutionConfig),
+    };
 
     let mut rng = thread_rng();
 
@@ -168,13 +175,13 @@ pub unsafe extern "C" fn evolve_population(
         &mut rng,
         &population.members,
         fitness,
-        population.config.selection_method(),
-        population.config.elitism(),
+        config.selection_method(),
+        config.elitism(),
         2,
         nn::gen::crossover,
-        population.config.crossover_settings(),
+        config.crossover_settings(),
         nn::gen::mutate,
-        population.config.mutation_settings(),
+        config.mutation_settings(),
     );
 
     // Also drops the old vector

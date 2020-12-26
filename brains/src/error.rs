@@ -41,6 +41,7 @@ pub enum BrainsError {
 
     // Evolution
     FitnessPointerNull = 700,
+    MissingEvolutionConfig,
 
     // Export
     InvalidOutputPath = 800,
