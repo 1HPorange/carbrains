@@ -1,0 +1,81 @@
+{
+  "population_size": 200,
+  "min_weight": -1.0,
+  "max_weight": 1.0,
+  "elitism": 0.02,
+  "network": {
+    "input_count": 6,
+    "layers": [
+      [
+        "TanH",
+        "TanH",
+        "TanH",
+        "TanH",
+        "TanH",
+        "TanH"
+      ],
+      [
+        "TanH",
+        "TanH"
+      ]
+    ]
+  },
+  "selection_method": "FitnessProportionate",
+  "crossover": {
+    "min_nodes_affected_ratio": 0.02,
+    "max_nodes_affected_ratio": 0.3,
+    "methods": [
+      {
+        "method": "SwapWholeNode",
+        "relative_probability": 3.0
+      },
+      {
+        "method": {
+          "SwapSomeWeights": {
+            "min_weights_swapped_ratio": 0.25,
+            "max_weights_swapped_ratio": 0.75
+          }
+        },
+        "relative_probability": 1.0
+      }
+    ]
+  },
+  "mutation": {
+    "mutation_probability": 0.3,
+    "min_weights_affected_ratio": 0.0,
+    "max_weights_affected_ratio": 0.2,
+    "methods": [
+      {
+        "method": "Invert",
+        "relative_probability": 0.5
+      },
+      {
+        "method": {
+          "Replace": [
+            -2.0,
+            2.0
+          ]
+        },
+        "relative_probability": 1.0
+      },
+      {
+        "method": {
+          "Scale": [
+            -2.0,
+            2.0
+          ]
+        },
+        "relative_probability": 4.0
+      },
+      {
+        "method": {
+          "Shift": [
+            -2.0,
+            2.0
+          ]
+        },
+        "relative_probability": 2.0
+      }
+    ]
+  }
+}

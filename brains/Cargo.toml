@@ -1,0 +1,17 @@
+[package]
+name = "brains"
+version = "0.1.0"
+authors = ["Markus Webel <m@rkus.online>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "brains"
+crate-type = ["cdylib"]
+
+[dependencies]
+rand = "0.7.3"
+libc = "0.2.81"
+serde = { version = "1.0.118", features = ["derive"] }
+serde_json = "1.0.60"
