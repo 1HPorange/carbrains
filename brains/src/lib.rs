@@ -120,16 +120,17 @@ pub unsafe extern "C" fn build_population_from_config(
     BrainsError::None
 }
 
+// TODO: Change this embarrasing function name
 #[no_mangle]
 pub unsafe extern "C" fn load_existing_population(
-    population_path: Option<NonNull<c_char>>,
+    members_path: Option<NonNull<c_char>>,
     config_path: Option<NonNull<c_char>>,
     population: *mut *mut Population,
     count: *mut usize,
     inputs: *mut usize,
     outputs: *mut usize,
 ) -> BrainsError {
-    let members_path = match population_path {
+    let members_path = match members_path {
         Some(p) => match CStr::from_ptr(p.as_ptr()).to_str() {
             Ok(p) => p,
             Err(e) => return with_last_error_extended(BrainsError::PopulationPathInvalid, e),

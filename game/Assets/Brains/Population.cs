@@ -11,7 +11,7 @@ public class Population : IDisposable
     /// <summary>
     /// Number of neural networks in the entire population
     /// </summary>
-    public readonly ulong Members;
+    public readonly ulong Size;
 
     /// <summary>
     /// Number of inputs for a single population member
@@ -23,10 +23,10 @@ public class Population : IDisposable
     /// </summary>
     public readonly ulong Outputs;
 
-    private unsafe Population(void* population, ulong members, ulong inputs, ulong outputs)
+    private unsafe Population(void* population, ulong size, ulong inputs, ulong outputs)
     {
         _population = population;
-        Members = members;
+        Size = size;
         Inputs = inputs;
         Outputs = outputs;
     }
@@ -48,6 +48,29 @@ public class Population : IDisposable
             ulong* outputs_ptr = &outputs;
 
             ThrowOnError(() => BrainsDll.build_population_from_config(path, population_ptr, members_ptr, inputs_ptr, outputs_ptr));
+
+            return new Population(population, members, inputs, outputs);
+        }
+    }
+
+    public static Population LoadFromFile(string membersPath, string configPath)
+    {
+        unsafe
+        {
+            void* population = null;
+            void** population_ptr = &population;
+
+            ulong members;
+            ulong* members_ptr = &members;
+
+            ulong inputs;
+            ulong* inputs_ptr = &inputs;
+
+            ulong outputs;
+            ulong* outputs_ptr = &outputs;
+
+            ThrowOnError(() => BrainsDll.load_existing_population(membersPath, configPath, population_ptr, members_ptr, inputs_ptr,
+                outputs_ptr));
 
             return new Population(population, members, inputs, outputs);
         }

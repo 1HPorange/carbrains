@@ -14,6 +14,9 @@ public static unsafe class BrainsDll
     public static extern ushort build_population_from_config([MarshalAs(UnmanagedType.LPStr)] string path, void** population, ulong* count, ulong* inputs, ulong* outputs);
 
     [DllImport("brains", CallingConvention = CallingConvention.Cdecl)]
+    public static extern ushort load_existing_population([MarshalAs(UnmanagedType.LPStr)] string membersPath, [MarshalAs(UnmanagedType.LPStr)] string configPath, void** population, ulong* count, ulong* inputs, ulong* outputs);
+
+    [DllImport("brains", CallingConvention = CallingConvention.Cdecl)]
     public static extern ushort evaluate_member(void* population, ulong index, double* inputs, double* outputs);
 
     [DllImport("brains", CallingConvention = CallingConvention.Cdecl)]

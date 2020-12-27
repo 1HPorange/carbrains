@@ -45,7 +45,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
         // Spawn neural cars
         _neuralCarPrefab.SetActive(false);
-        var cars = Enumerable.Range(0, (int)_population.Members).Select(idx =>
+        var cars = Enumerable.Range(0, (int)_population.Size).Select(idx =>
         {
             var go = Instantiate(_neuralCarPrefab);
 
@@ -68,7 +68,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private IEnumerator TrainingRoutine(List<NeuralCarInputSource> cars, List<int> trackSeeds)
     {
-        double[] fitness = new double[_population.Members];
+        double[] fitness = new double[_population.Size];
 
         while (true)
         {
@@ -100,6 +100,9 @@ public class NeuralNetworkTrainer : MonoBehaviour
                         fitness[i] += 1.0 - (cars[i].LapFinishTime.Value - lapStart).TotalSeconds / _lapTimeLimitSeconds;
                     }
                 }
+
+                // Prevent pressing N triggering a track skip multiple times
+                yield return null;
             }
 
             if (_membersToSave > 0)
