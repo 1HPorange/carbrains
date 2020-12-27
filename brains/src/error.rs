@@ -54,6 +54,8 @@ pub enum BrainsError {
     PopulationPathInvalid,
     CannotReadMembersFile,
     InvalidMembersJson,
+    InconsistentNetworkInputCounts,
+    InconsistentNetworkOutputCounts,
 
     // Evaluate
     InvalidMemberIndex = 1000,

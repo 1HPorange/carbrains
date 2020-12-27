@@ -107,14 +107,14 @@ pub unsafe extern "C" fn build_population_from_config(
         }
     }
 
+    *count = members.len();
+    *inputs = members[0].input_count();
+    *outputs = members[0].output_count();
+
     let population_box = Box::new(Population {
         members,
         config: Some(config),
     });
-
-    *count = population_box.members.len();
-    *inputs = population_box.members[0].input_count();
-    *outputs = population_box.members[0].output_count();
     *population = Box::into_raw(population_box);
 
     BrainsError::None
@@ -125,6 +125,9 @@ pub unsafe extern "C" fn load_existing_population(
     population_path: Option<NonNull<c_char>>,
     config_path: Option<NonNull<c_char>>,
     population: *mut *mut Population,
+    count: *mut usize,
+    inputs: *mut usize,
+    outputs: *mut usize,
 ) -> BrainsError {
     let members_path = match population_path {
         Some(p) => match CStr::from_ptr(p.as_ptr()).to_str() {
@@ -143,6 +146,24 @@ pub unsafe extern "C" fn load_existing_population(
         Ok(m) => m,
         Err(e) => return with_last_error_extended(BrainsError::InvalidMembersJson, e),
     };
+
+    if members.is_empty() {
+        return with_last_error(BrainsError::PopulationSizeZero);
+    }
+
+    if !members
+        .iter()
+        .all(|nn| nn.input_count() == members[0].input_count())
+    {
+        return with_last_error(BrainsError::InconsistentNetworkInputCounts);
+    }
+
+    if !members
+        .iter()
+        .all(|nn| nn.output_count() == members[0].output_count())
+    {
+        return with_last_error(BrainsError::InconsistentNetworkOutputCounts);
+    }
 
     let config = match config_path {
         Some(config_path) => {
@@ -163,6 +184,10 @@ pub unsafe extern "C" fn load_existing_population(
         }
         None => None,
     };
+
+    *count = members.len();
+    *inputs = members[0].input_count();
+    *outputs = members[0].output_count();
 
     let population_box = Box::new(Population { members, config });
     *population = Box::into_raw(population_box);
