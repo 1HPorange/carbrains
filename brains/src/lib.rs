@@ -15,6 +15,7 @@ use std::{
 use config::{Config, ConfigTemplate};
 use error::BrainsError;
 use libc::{c_char, c_double};
+use nn::NeuralNetwork;
 use rand::prelude::*;
 
 pub struct Population {
@@ -53,7 +54,7 @@ pub unsafe extern "C" fn get_last_error() -> *const c_char {
 #[no_mangle]
 pub unsafe extern "C" fn build_population_from_config(
     path: Option<NonNull<c_char>>,
-    population: *mut *const Population,
+    population: *mut *mut Population,
     count: *mut usize,
     inputs: *mut usize,
     outputs: *mut usize,
@@ -114,6 +115,56 @@ pub unsafe extern "C" fn build_population_from_config(
     *count = population_box.members.len();
     *inputs = population_box.members[0].input_count();
     *outputs = population_box.members[0].output_count();
+    *population = Box::into_raw(population_box);
+
+    BrainsError::None
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn load_existing_population(
+    population_path: Option<NonNull<c_char>>,
+    config_path: Option<NonNull<c_char>>,
+    population: *mut *mut Population,
+) -> BrainsError {
+    let members_path = match population_path {
+        Some(p) => match CStr::from_ptr(p.as_ptr()).to_str() {
+            Ok(p) => p,
+            Err(e) => return with_last_error_extended(BrainsError::PopulationPathInvalid, e),
+        },
+        None => return with_last_error(BrainsError::PopulationPathNull),
+    };
+
+    let members_json = match fs::read_to_string(members_path) {
+        Ok(j) => j,
+        Err(e) => return with_last_error_extended(BrainsError::CannotReadMembersFile, e),
+    };
+
+    let members: Vec<NeuralNetwork> = match serde_json::from_str(&members_json) {
+        Ok(m) => m,
+        Err(e) => return with_last_error_extended(BrainsError::InvalidMembersJson, e),
+    };
+
+    let config = match config_path {
+        Some(config_path) => {
+            let config_path = match CStr::from_ptr(config_path.as_ptr()).to_str() {
+                Ok(p) => p,
+                Err(e) => return with_last_error_extended(BrainsError::InvalidConfigPath, e),
+            };
+
+            let config_template: ConfigTemplate = match serde_json::from_str(config_path) {
+                Ok(c) => c,
+                Err(e) => return with_last_error_extended(BrainsError::InvalidConfigJson, e),
+            };
+
+            match Config::build_from_template(&config_template) {
+                Ok(c) => Some(c),
+                Err(e) => return with_last_error(e),
+            }
+        }
+        None => None,
+    };
+
+    let population_box = Box::new(Population { members, config });
     *population = Box::into_raw(population_box);
 
     BrainsError::None

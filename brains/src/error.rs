@@ -49,8 +49,14 @@ pub enum BrainsError {
     FileSaveError,
     OutputPathNull,
 
+    // Import
+    PopulationPathNull = 900,
+    PopulationPathInvalid,
+    CannotReadMembersFile,
+    InvalidMembersJson,
+
     // Evaluate
-    InvalidMemberIndex = 900,
+    InvalidMemberIndex = 1000,
     InputsPointerNull,
     OutputsPointerNull,
 }

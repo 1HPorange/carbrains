@@ -34,7 +34,7 @@ impl Default for NeuralNetworkTemplate {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NeuralNetwork {
     layers: RefCell<Vec<Layer>>,
 }
