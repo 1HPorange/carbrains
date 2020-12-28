@@ -191,6 +191,14 @@ pub unsafe extern "C" fn load_existing_population(
         None => None,
     };
 
+    if !config
+        .as_ref()
+        .map(|c| c.network().is_structurally_equal(&members[0]))
+        .unwrap_or(true)
+    {
+        return with_last_error(BrainsError::PopulationConfigMismatch);
+    }
+
     *count = members.len();
     *inputs = members[0].input_count();
     *outputs = members[0].output_count();

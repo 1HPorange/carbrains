@@ -56,6 +56,7 @@ pub enum BrainsError {
     InvalidMembersJson,
     InconsistentNetworkInputCounts,
     InconsistentNetworkOutputCounts,
+    PopulationConfigMismatch,
 
     // Evaluate
     InvalidMemberIndex = 1000,

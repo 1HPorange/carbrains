@@ -95,6 +95,18 @@ impl NeuralNetwork {
         }
     }
 
+    pub fn is_structurally_equal(&self, other: &NeuralNetwork) -> bool {
+        self.layers
+            .borrow()
+            .iter()
+            .zip(other.layers.borrow().iter())
+            .all(|(s, o)| {
+                s.activations.len() == o.activations.len()
+                    && s.weights.len() == o.weights.len()
+                    && s.input_count == o.input_count
+            })
+    }
+
     pub fn total_nodes(&self) -> usize {
         self.layers
             .borrow()
