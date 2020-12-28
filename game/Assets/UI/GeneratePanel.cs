@@ -76,13 +76,13 @@ public class GeneratePanel : MonoBehaviour
 
     private void EnsureDefaultConfigCreated()
     {
-        if (GetConfigs().Length == 1)
-        {
-            var configsFolder = GameFolders.EnsureGameFolder(GameFolders.CONFIGS);
-            var defaultConfigPath = Path.Combine(configsFolder, "default-config.json");
+        // We always regenerate the default config since it might have changed after an update
 
-            Population.ExportDefaultConfig(defaultConfigPath);
-        }
+        var configsFolder = GameFolders.EnsureGameFolder(GameFolders.CONFIGS);
+        var defaultConfigPath = Path.Combine(configsFolder, "default-config.json");
+
+        Population.ExportDefaultConfig(defaultConfigPath);
+
     }
 
     private FilePathName[] GetConfigs()

@@ -11,6 +11,6 @@ public class GenerationLabel : MonoBehaviour
 
     private void Update()
     {
-        _label.text = $"Gen {_trainer.Generation.ToString("D3")} ({_trainer.TrackIndex + 1}/{_trainer.TrackCount})";
+        _label.text = $"Gen {_trainer.Generation} ({_trainer.TrackIndex + 1}/{_trainer.TrackCount})";
     }
 }

@@ -35,6 +35,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private DateTime? _lapStart;
 
+    private TimeSpan?[] _trackRecords;
+
     // Publics
 
     public Population Population { get; private set; }
@@ -59,7 +61,18 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     public bool SkipTrack { get; set; }
 
-    public int[] TrackSeeds { get; set; }
+    private int[] _trackSeeds;
+
+    public int[] TrackSeeds
+    {
+        get => _trackSeeds;
+        set {
+            _trackRecords = new TimeSpan?[value.Length];
+            _trackSeeds = value;
+        }
+    }
+
+    public TimeSpan? CurrentTrackRecord => _trackRecords?[TrackIndex];
 
     public void CreatePopulation(string configPath, string populationPath)
     {
@@ -159,6 +172,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 CalculateFitness(cars, fitness);
 
+                UpdateTrackRecord();
+
                 // Prevent pressing N triggering a track skip multiple times
                 yield return null;
 
@@ -239,6 +254,14 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
     }
 
+    private void UpdateTrackRecord()
+    {
+        if (FastestLapTime.HasValue && FastestLapTime.Value < (_trackRecords[TrackIndex] ?? TimeSpan.MaxValue))
+        {
+            _trackRecords[TrackIndex] = FastestLapTime;
+        }
+    }
+
     private List<NeuralCarInputSource> SpawnCars()
     {
         _neuralCarPrefab.SetActive(false);
@@ -303,7 +326,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             if (null != _neuralCars)
             {
                 // TODO: Make this formula configurable
-                _leniency = Math.Max(0.0, 1.0 - (2.0 * (double)_neuralCars.Count(car => car.LapFinishTime.HasValue)) / (double)_neuralCars.Count);
+                _leniency = Math.Max(0.0, 1.0 - (4.0 * (double)_neuralCars.Count(car => car.LapFinishTime.HasValue)) / (double)_neuralCars.Count);
             }
             else
             {

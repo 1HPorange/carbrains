@@ -79,7 +79,7 @@ pub unsafe extern "C" fn build_population_from_config(
 
     let config_json = match fs::read_to_string(path) {
         Ok(json) => json,
-        Err(_) => return with_last_error(BrainsError::InvalidConfigPath),
+        Err(_) => return with_last_error(BrainsError::CannotReadConfigFile),
     };
 
     let config_template: ConfigTemplate = match serde_json::from_str(&config_json) {
@@ -173,7 +173,12 @@ pub unsafe extern "C" fn load_existing_population(
                 Err(e) => return with_last_error_extended(BrainsError::InvalidConfigPath, e),
             };
 
-            let config_template: ConfigTemplate = match serde_json::from_str(config_path) {
+            let config_json = match fs::read_to_string(config_path) {
+                Ok(json) => json,
+                Err(_) => return with_last_error(BrainsError::CannotReadConfigFile),
+            };
+
+            let config_template: ConfigTemplate = match serde_json::from_str(&config_json) {
                 Ok(c) => c,
                 Err(e) => return with_last_error_extended(BrainsError::InvalidConfigJson, e),
             };

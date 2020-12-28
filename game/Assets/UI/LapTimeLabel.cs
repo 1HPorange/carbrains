@@ -12,7 +12,7 @@ public class LapTimeLabel : MonoBehaviour
 
     private void Update()
     {
-        _label.text = $"{FormatLapTime(_trainer.CurrentLapTime)} / <color=#285DFF>{FormatLapTime(_trainer.FastestLapTime)}</color>";
+        _label.text = $"{FormatLapTime(_trainer.CurrentLapTime)} / {FormatLapTime(_trainer.FastestLapTime)} / <color=#285DFF>{FormatLapTime(_trainer.CurrentTrackRecord)}</color>";
     }
 
     private string FormatLapTime(TimeSpan? lapTime)
