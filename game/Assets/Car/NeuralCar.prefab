@@ -115,7 +115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43b1f2bfb2e8d8c40b2f98137f3ba20c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _checkpointTimeoutSeconds: 3
+  _checkpointTimeoutSeconds: 5
 --- !u!114 &6938908131531061859
 MonoBehaviour:
   m_ObjectHideFlags: 0
