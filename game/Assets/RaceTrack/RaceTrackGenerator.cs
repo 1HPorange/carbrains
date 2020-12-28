@@ -59,16 +59,9 @@ public class RaceTrackGenerator : MonoBehaviour
         }
     }
 
-    public async Task GenerateAsync(int? seed)
+    public void Generate(int seed)
     {
-        await Task.Run(() => GenerateInternal(seed ?? Environment.TickCount));
-
-        RaceTrackGenerated.Invoke(_racetrack);
-    }
-
-    public void Generate(int? seed)
-    {
-        GenerateInternal(seed ?? Environment.TickCount);
+        GenerateInternal(seed);
 
         RaceTrackGenerated.Invoke(_racetrack);
     }

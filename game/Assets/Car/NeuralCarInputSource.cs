@@ -88,7 +88,7 @@ namespace Assets.Car
                 return;
             }
 
-            if ((DateTime.Now - _maxCheckpointReachedAt).TotalSeconds > _checkpointTimeoutSeconds)
+            if ((DateTime.Now - _maxCheckpointReachedAt).TotalSeconds * Time.timeScale > _checkpointTimeoutSeconds)
             {
                 IsActive = false;
                 return;
@@ -122,7 +122,7 @@ namespace Assets.Car
             {
                 if (cp > Checkpoint + CheckpointGenerator.NUM_CHECKPOINTS / 2)
                 {
-                    Debug.LogWarning($"Car {_memberIndex} violated the CP skip limit (Current: {Checkpoint}, Ignored: {cp})");
+                    //Debug.LogWarning($"Car {_memberIndex} violated the CP skip limit (Current: {Checkpoint}, Ignored: {cp})");
                     return;
                 }
 

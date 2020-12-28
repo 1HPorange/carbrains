@@ -45,7 +45,6 @@ pub fn crossover<R: Rng + ?Sized>(
                     * rng.gen_range(min_weights_swapped_ratio, max_weights_swapped_ratio))
                 .trunc() as usize;
 
-                weight_index_buffer.clear();
                 weight_index_buffer.resize_with(weights_to_swap, Default::default);
 
                 (0..node_weights).choose_multiple_fill(rng, &mut weight_index_buffer[..]);

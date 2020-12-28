@@ -23,6 +23,7 @@ public class Population : IDisposable
     /// </summary>
     public readonly ulong Outputs;
 
+
     private unsafe Population(void* population, ulong size, ulong inputs, ulong outputs)
     {
         _population = population;

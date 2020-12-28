@@ -76,6 +76,8 @@ where
             crossover_settings,
             &mut crossover_weight_index_buffer,
         );
+
+        crossover_weight_index_buffer.clear();
     }
 
     // mutation

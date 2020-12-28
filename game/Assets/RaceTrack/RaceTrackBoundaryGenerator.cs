@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Events;
 
 public class RaceTrackBoundaryGenerator : MonoBehaviour
 {
+    public UnityEvent OnColliderGenFailed;
+
     [SerializeField]
     private RaceTrackContourExtractor _contourExtractor = default;
 
@@ -25,5 +29,10 @@ public class RaceTrackBoundaryGenerator : MonoBehaviour
     {
         _outer.points = outer.Append(outer[0]).ToArray();
         _inner.points = inner.Append(inner[0]).ToArray();
+
+        if (_inner.bounds.size == Vector3.zero || _outer.bounds.size == Vector3.zero)
+        {
+            OnColliderGenFailed.Invoke();
+        }
     }
 }
