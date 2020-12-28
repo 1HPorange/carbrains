@@ -113,10 +113,12 @@ public class TrainPanel : MonoBehaviour
 
             if (_isRunning)
             {
+                _startStopButton.GetComponentInChildren<Text>().text = "Stop";
                 OnStart.Invoke();
             }
             else
             {
+                _startStopButton.GetComponentInChildren<Text>().text = "Start";
                 OnStop.Invoke();
             }
         });

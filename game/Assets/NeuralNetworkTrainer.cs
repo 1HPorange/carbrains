@@ -29,8 +29,6 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     // Internals
 
-    private Population _population;
-
     private bool _evolveAfterRound;
 
     private List<NeuralCarInputSource> _neuralCars;
@@ -39,9 +37,13 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     // Publics
 
+    public Population Population { get; private set; }
+
     public TimeSpan? CurrentLapTime => CalcCurrentLapTime();
 
     public TimeSpan? FastestLapTime => CalcFastestLapTime();
+
+    public double Leniency => CalcLeniency();
 
     public int Generation { get; private set; }
 
@@ -69,14 +71,16 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
             if (populationPath == null)
             {
-                _population = Population.GenerateFromConfig(configPath);
+                Population = Population.GenerateFromConfig(configPath);
                 _evolveAfterRound = true;
             }
             else
             {
-                _population = Population.LoadFromFile(populationPath, configPath);
+                Population = Population.LoadFromFile(populationPath, configPath);
                 _evolveAfterRound = false;
             }
+
+            Generation = 1;
 
             OnPopulationCreated.Invoke();
         }
@@ -95,15 +99,14 @@ public class NeuralNetworkTrainer : MonoBehaviour
         Assert.IsNotNull(_neuralCarPrefab);
         Assert.IsNotNull(TrackSeeds);
         Assert.IsTrue(TrackSeeds.Length > 0);
-        Assert.IsNotNull(_population);
+        Assert.IsNotNull(Population);
 
         _neuralCars = SpawnCars();
 
         SkipTrack = false;
-        Generation = 1;
         TrackIndex = 0;
 
-        StartCoroutine(TrainingRoutine(_population, _neuralCars, TrackSeeds, _evolveAfterRound));
+        StartCoroutine(TrainingRoutine(Population, _neuralCars, TrackSeeds, _evolveAfterRound));
     }
 
     public void StopTraining()
@@ -126,7 +129,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private IEnumerator TrainingRoutine(Population population, List<NeuralCarInputSource> cars, int[] trackSeeds, bool evolve)
     {
-        double[] fitness = new double[_population.Size];
+        double[] fitness = new double[Population.Size];
 
         while (true)
         {
@@ -142,7 +145,9 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 OnTrackSwitch.Invoke();
 
-                // Start driving
+                // Start driving only on fixed update frames; maybe that does something good :)
+                yield return new WaitForFixedUpdate();
+
                 cars.ForEach(car => car.ActivateAndStartDriving());
 
                 yield return new WaitUntil(() =>
@@ -173,7 +178,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 var filePath = Path.Combine(bestFolder,
                     $"Best-{string.Join("-", trackSeeds)}-{DateTime.Now.Ticks}.json");
 
-                _population.SaveTopN(filePath, fitness, SaveBestAfterRound);
+                Population.SaveTopN(filePath, fitness, SaveBestAfterRound);
 
                 SaveBestAfterRound = 0;
             }
@@ -184,14 +189,14 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 var filePath = Path.Combine(populationFolder,
                     $"{string.Join("-", trackSeeds)}-{DateTime.Now.Ticks}.json");
 
-                _population.SaveAll(filePath);
+                Population.SaveAll(filePath);
 
                 SaveAllAfterRound = false;
             }
 
             if (evolve)
             {
-                _population.Evolve(fitness);
+                Population.Evolve(fitness);
             }
 
             Generation++;
@@ -221,7 +226,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         catch { }
 
         var rateFinishTime = fastestSlowestDelta > 0.0 && // TODO: Make the 0.1f below configurable
-                             cars.Count(car => car.LapFinishTime.HasValue) > Mathf.RoundToInt(0.1f * _population.Size);
+                             cars.Count(car => car.LapFinishTime.HasValue) > Mathf.RoundToInt(0.1f * Population.Size);
 
         for (int i = 0; i < cars.Count; i++)
         {
@@ -237,12 +242,12 @@ public class NeuralNetworkTrainer : MonoBehaviour
     private List<NeuralCarInputSource> SpawnCars()
     {
         _neuralCarPrefab.SetActive(false);
-        var cars = Enumerable.Range(0, (int)_population.Size).Select(idx =>
+        var cars = Enumerable.Range(0, (int)Population.Size).Select(idx =>
         {
             var go = Instantiate(_neuralCarPrefab);
 
             var inputSource = go.GetComponent<NeuralCarInputSource>();
-            inputSource.Initialize(_population, (ulong)idx);
+            inputSource.Initialize(this, (ulong)idx);
 
             var respawner = go.GetComponent<SpawnOnStartLine>();
             respawner.TrackGen = _trackGen;
@@ -287,6 +292,30 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
     }
 
+    // Where are my local statics? :(
+    private static int LenienceLastCaluclatedFrame = 0;
+    private double _leniency;
+
+    private double CalcLeniency()
+    {
+        if (Time.frameCount > LenienceLastCaluclatedFrame)
+        {
+            if (null != _neuralCars)
+            {
+                // TODO: Make this formula configurable
+                _leniency = Math.Max(0.0, 1.0 - (2.0 * (double)_neuralCars.Count(car => car.LapFinishTime.HasValue)) / (double)_neuralCars.Count);
+            }
+            else
+            {
+                _leniency = 1.0;
+            }
+
+            LenienceLastCaluclatedFrame = Time.frameCount;
+        }
+
+        return _leniency;
+    }
+
     private void RemovePopulation(bool dispose)
     {
         _neuralCars?.ForEach(car => Destroy(car.gameObject));
@@ -294,14 +323,14 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
         if (dispose)
         {
-            _population?.Dispose();
-            _population = null;
+            Population?.Dispose();
+            Population = null;
         }
     }
 
     private void OnDestroy()
     {
-        _population?.Dispose();
-        _population = null;
+        Population?.Dispose();
+        Population = null;
     }
 }

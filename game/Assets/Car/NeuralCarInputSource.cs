@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Assets.Car
 {
@@ -20,7 +21,7 @@ namespace Assets.Car
 
         private double[] _outputs;
 
-        private Population _population;
+        private NeuralNetworkTrainer _trainer;
 
         private ulong _memberIndex;
 
@@ -28,9 +29,13 @@ namespace Assets.Car
 
         private Rigidbody2D _rigidbody2D;
 
+        private SpriteRenderer _renderer;
+
         private int _maxCheckpoint = 0;
 
         private DateTime _maxCheckpointReachedAt;
+
+        private Color _color;
 
         [SerializeField]
         private double _checkpointTimeoutSeconds = 10f;
@@ -43,14 +48,17 @@ namespace Assets.Car
         {
             _visionSource = GetComponent<CarVision>();
             _rigidbody2D = GetComponent<Rigidbody2D>();
+            _renderer = GetComponent<SpriteRenderer>();
+
+            _color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.75f, 1f);
         }
 
-        public void Initialize(Population population, ulong memberIndex)
+        public void Initialize(NeuralNetworkTrainer trainer, ulong memberIndex)
         {
-            _population = population;
+            _trainer = trainer;
             _memberIndex = memberIndex;
-            _inputs = new double[population.Inputs];
-            _outputs = new double[population.Outputs];
+            _inputs = new double[trainer.Population.Inputs];
+            _outputs = new double[trainer.Population.Outputs];
 
             IsActive = false;
         }
@@ -88,7 +96,7 @@ namespace Assets.Car
                 return;
             }
 
-            if ((DateTime.Now - _maxCheckpointReachedAt).TotalSeconds * Time.timeScale > _checkpointTimeoutSeconds)
+            if ((DateTime.Now - _maxCheckpointReachedAt).TotalSeconds * Time.timeScale > _checkpointTimeoutSeconds * _trainer.Leniency)
             {
                 IsActive = false;
                 return;
@@ -103,7 +111,19 @@ namespace Assets.Car
             _inputs[4] = _visionSource.FrontRight;
             _inputs[5] = _visionSource.Right;
 
-            _population.EvaluateMember(_memberIndex, _inputs, _outputs);
+            _trainer.Population.EvaluateMember(_memberIndex, _inputs, _outputs);
+        }
+
+        private void Update()
+        {
+            if (IsActive)
+            {
+                _renderer.color = _color;
+            }
+            else
+            {
+                _renderer.color = _color * 0.5f;
+            }
         }
 
         private void OnCollisionEnter2D(Collision2D col)

@@ -14,9 +14,9 @@ pub struct MutationSettingsTemplate {
 impl Default for MutationSettingsTemplate {
     fn default() -> Self {
         MutationSettingsTemplate {
-            mutation_probability: 0.3,
+            mutation_probability: 0.75,
             min_weights_affected_ratio: 0.0,
-            max_weights_affected_ratio: 0.2,
+            max_weights_affected_ratio: 0.25,
             methods: vec![
                 MutationMethodProbability {
                     method: MutationMethod::Invert,
