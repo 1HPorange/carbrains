@@ -74,7 +74,8 @@ namespace Assets.Car
         {
             IsActive = false;
 
-            GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            _rigidbody2D.velocity = Vector2.zero;
+            _rigidbody2D.angularVelocity = 0f;
         }
 
         public void ResetRun()

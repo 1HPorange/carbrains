@@ -90,7 +90,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             else
             {
                 Population = Population.LoadFromFile(populationPath, configPath);
-                _evolveAfterRound = false;
+                _evolveAfterRound = null != configPath;
             }
 
             Generation = 1;
