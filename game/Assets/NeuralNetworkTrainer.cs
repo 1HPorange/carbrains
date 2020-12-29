@@ -249,7 +249,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
             if (cars[i].LapFinishTime.HasValue && rateFinishTime)
             {
-                fitness[i] += 1.0 - (cars[i].LapFinishTime.Value - fastestFinish).TotalSeconds * Time.timeScale / fastestSlowestDelta;
+                fitness[i] += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish).TotalSeconds * Time.timeScale / fastestSlowestDelta);
             }
         }
     }
