@@ -102,6 +102,15 @@ public class TrainPanel : MonoBehaviour
         _cancelButton.onClick.AddListener(() =>
         {
             Freeze();
+
+            if (_isRunning)
+            {
+                _startStopButton.GetComponentInChildren<Text>().text = "Start";
+                OnStop.Invoke();
+
+                _isRunning = false;
+            }
+
             OnCancelled.Invoke();
         });
 
