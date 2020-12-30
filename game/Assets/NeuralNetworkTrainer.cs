@@ -172,7 +172,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 cars.ForEach(car => car.DeactivateAndStall());
 
-                CalculateFitness(cars, fitness);
+                AddFitnessRatings(cars, fitness);
 
                 UpdateTrackRecord();
 
@@ -181,12 +181,6 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 // Prevent skip track from triggering multiple times
                 SkipTrack = false;
-            }
-
-            // Square fitness for faster learning
-            for (int  i = 0;  i < fitness.Length;  i++)
-            {
-                fitness[i] *= fitness[i];
             }
 
             if (SaveBestAfterRound > 0)
@@ -227,7 +221,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
     }
 
-    private void CalculateFitness(List<NeuralCarInputSource> cars, double[] fitness)
+    private void AddFitnessRatings(List<NeuralCarInputSource> cars, double[] fitness)
     {
         var fastestFinish = DateTime.MinValue;
         var slowestFinish = DateTime.MinValue;
@@ -246,12 +240,17 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
         for (int i = 0; i < cars.Count; i++)
         {
-            fitness[i] += (double)cars[i].Checkpoint / (double)CheckpointGenerator.NUM_CHECKPOINTS;
+            var added = (double)cars[i].Checkpoint / (double)CheckpointGenerator.NUM_CHECKPOINTS;
 
             if (cars[i].LapFinishTime.HasValue && rateFinishTime)
             {
-                fitness[i] += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish).TotalSeconds * Time.timeScale / fastestSlowestDelta);
+                added += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish).TotalSeconds * Time.timeScale / fastestSlowestDelta);
             }
+
+            // Square fitness (per track) for faster learning
+            added *= added;
+
+            fitness[i] = added;
         }
     }
 
