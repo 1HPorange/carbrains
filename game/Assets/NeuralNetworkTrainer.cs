@@ -27,6 +27,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     [SerializeField] private GameObject _neuralCarPrefab = default;
 
+    [SerializeField] private CheckpointGenerator _checkpointGenerator = default;
+
     // Internals
 
     private bool _evolveAfterRound;
@@ -269,7 +271,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             var go = Instantiate(_neuralCarPrefab);
 
             var inputSource = go.GetComponent<NeuralCarInputSource>();
-            inputSource.Initialize(this, (ulong)idx);
+            inputSource.Initialize(this, (ulong)idx, _checkpointGenerator);
 
             var respawner = go.GetComponent<SpawnOnStartLine>();
             respawner.TrackGen = _trackGen;

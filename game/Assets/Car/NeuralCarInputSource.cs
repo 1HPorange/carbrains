@@ -23,6 +23,8 @@ namespace Assets.Car
 
         private NeuralNetworkTrainer _trainer;
 
+        private CheckpointGenerator _checkpointGenerator;
+
         private ulong _memberIndex;
 
         private CarVision _visionSource;
@@ -53,12 +55,14 @@ namespace Assets.Car
             _color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.75f, 1f);
         }
 
-        public void Initialize(NeuralNetworkTrainer trainer, ulong memberIndex)
+        public void Initialize(NeuralNetworkTrainer trainer, ulong memberIndex, CheckpointGenerator checkpointGenerator)
         {
             _trainer = trainer;
             _memberIndex = memberIndex;
             _inputs = new double[trainer.Population.Inputs];
             _outputs = new double[trainer.Population.Outputs];
+
+            _checkpointGenerator = checkpointGenerator;
 
             IsActive = false;
         }
@@ -103,14 +107,49 @@ namespace Assets.Car
                 return;
             }
 
-            _inputs[0] = Vector2.Angle(_rigidbody2D.velocity, transform.up) > 90f ? 
-                -_rigidbody2D.velocity.magnitude : 
-                _rigidbody2D.velocity.magnitude;
-            _inputs[1] = _visionSource.Left;
-            _inputs[2] = _visionSource.FrontLeft;
-            _inputs[3] = _visionSource.Front;
-            _inputs[4] = _visionSource.FrontRight;
-            _inputs[5] = _visionSource.Right;
+            // Assemble inputs
+            try
+            {
+                var idx = 0;
+
+                // Vision (5)
+                _inputs[idx++] = _visionSource.Left;
+                _inputs[idx++] = _visionSource.FrontLeft;
+                _inputs[idx++] = _visionSource.Front;
+                _inputs[idx++] = _visionSource.FrontRight;
+                _inputs[idx++] = _visionSource.Right;
+
+                // Signed velocity (1)
+                _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up);
+
+                // 2D Velocity (2)
+                _inputs[idx++] = _rigidbody2D.velocity.x;
+                _inputs[idx++] = _rigidbody2D.velocity.y;
+
+                // Own orientation and position (3)
+                _inputs[idx++] = transform.position.x;
+                _inputs[idx++] = transform.position.y;
+                _inputs[idx++] = transform.rotation.z;
+
+                // Upcoming checkpoint positions (10, 20, 30, 40) (8)
+                var cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 10);
+                _inputs[idx++] = cp.x;
+                _inputs[idx++] = cp.y;
+
+                cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 20);
+                _inputs[idx++] = cp.x;
+                _inputs[idx++] = cp.y;
+
+                cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 30);
+                _inputs[idx++] = cp.x;
+                _inputs[idx++] = cp.y;
+
+                cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 40);
+                _inputs[idx++] = cp.x;
+                _inputs[idx++] = cp.y;
+            }
+            catch { }
+
 
             _trainer.Population.EvaluateMember(_memberIndex, _inputs, _outputs);
         }

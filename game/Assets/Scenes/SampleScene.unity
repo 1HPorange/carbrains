@@ -4330,6 +4330,7 @@ MonoBehaviour:
   _trackGen: {fileID: 1417016677}
   _neuralCarPrefab: {fileID: 6938908131531061864, guid: 17dd5b07d98b2c945af08589bb4951bc,
     type: 3}
+  _checkpointGenerator: {fileID: 1363228453}
 --- !u!1001 &1142691113
 PrefabInstance:
   m_ObjectHideFlags: 0
