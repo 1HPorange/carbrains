@@ -8,7 +8,6 @@ public class GameFolders : MonoBehaviour
 {
     public const string CONFIGS = "configs";
     public const string POPULATIONS = "populations";
-    public const string BEST = "best";
 
     /// <summary>
     /// Ensures that a game folder exists and returns the full path to it

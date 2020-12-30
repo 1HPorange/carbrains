@@ -12,7 +12,7 @@ public class CheckpointGenerator : MonoBehaviour
 
     [SerializeField] private float _scale = 1f;
 
-    private readonly List<GameObject> _checkpoints = new List<GameObject>();
+    public readonly List<GameObject> Checkpoints = new List<GameObject>();
 
     private void OnEnable()
     {
@@ -55,13 +55,13 @@ public class CheckpointGenerator : MonoBehaviour
             };
             ec.isTrigger = true;
 
-            _checkpoints.Add(cp);
+            Checkpoints.Add(cp);
         }
     }
 
     private void DeleteAllCheckpoints()
     {
-        _checkpoints.ForEach(Destroy);
-        _checkpoints.Clear();
+        Checkpoints.ForEach(Destroy);
+        Checkpoints.Clear();
     }
 }

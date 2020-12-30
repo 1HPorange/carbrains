@@ -189,9 +189,9 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
             if (SaveBestAfterRound > 0)
             {
-                var bestFolder = GameFolders.EnsureGameFolder(GameFolders.BEST);
+                var bestFolder = GameFolders.EnsureGameFolder(GameFolders.POPULATIONS);
                 var filePath = Path.Combine(bestFolder,
-                    $"Best-{string.Join("-", trackSeeds)}-{DateTime.Now.Ticks}.json");
+                    $"Best-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}-{string.Join("-", trackSeeds)}.json");
 
                 Population.SaveTopN(filePath, fitness, SaveBestAfterRound);
 
@@ -202,7 +202,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             {
                 var populationFolder = GameFolders.EnsureGameFolder(GameFolders.POPULATIONS);
                 var filePath = Path.Combine(populationFolder,
-                    $"{string.Join("-", trackSeeds)}-{DateTime.Now.Ticks}.json");
+                    $"All-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}-{string.Join("-", trackSeeds)}.json");
 
                 Population.SaveAll(filePath);
 
@@ -212,9 +212,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
             if (evolve)
             {
                 Population.Evolve(fitness);
+                Generation++;
             }
-
-            Generation++;
 
             // Reset fitness
             for (int i = 0; i < fitness.Length; i++)
