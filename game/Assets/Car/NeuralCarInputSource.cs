@@ -25,6 +25,8 @@ namespace Assets.Car
 
         private CheckpointGenerator _checkpointGenerator;
 
+        private LongRunningTimer _timer;
+
         private ulong _memberIndex;
 
         private CarVision _visionSource;
@@ -35,7 +37,7 @@ namespace Assets.Car
 
         private int _maxCheckpoint = 0;
 
-        private DateTime _maxCheckpointReachedAt;
+        private double _maxCheckpointReachedAt;
 
         private Color _color;
 
@@ -44,7 +46,7 @@ namespace Assets.Car
 
         public int Checkpoint { get; private set; } = 0;
 
-        public DateTime? LapFinishTime { get; private set; } = null;
+        public double? LapFinishTime { get; private set; } = null;
 
         private void Awake()
         {
@@ -55,7 +57,7 @@ namespace Assets.Car
             _color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.75f, 1f);
         }
 
-        public void Initialize(NeuralNetworkTrainer trainer, ulong memberIndex, CheckpointGenerator checkpointGenerator)
+        public void Initialize(NeuralNetworkTrainer trainer, ulong memberIndex, CheckpointGenerator checkpointGenerator, LongRunningTimer timer)
         {
             _trainer = trainer;
             _memberIndex = memberIndex;
@@ -63,6 +65,7 @@ namespace Assets.Car
             _outputs = new double[trainer.Population.Outputs];
 
             _checkpointGenerator = checkpointGenerator;
+            _timer = timer;
 
             IsActive = false;
         }
@@ -71,7 +74,7 @@ namespace Assets.Car
         {
             IsActive = true;
 
-            _maxCheckpointReachedAt = DateTime.Now;
+            _maxCheckpointReachedAt = _timer.Now;
         }
 
         public void DeactivateAndStall()
@@ -101,7 +104,7 @@ namespace Assets.Car
                 return;
             }
 
-            if ((DateTime.Now - _maxCheckpointReachedAt).TotalSeconds * Time.timeScale > _checkpointTimeoutSeconds * _trainer.Leniency)
+            if (_timer.Now - _maxCheckpointReachedAt > _checkpointTimeoutSeconds * _trainer.Leniency)
             {
                 IsActive = false;
                 return;
@@ -194,12 +197,12 @@ namespace Assets.Car
                 if (cp > _maxCheckpoint)
                 {
                     _maxCheckpoint = cp;
-                    _maxCheckpointReachedAt = DateTime.Now;
+                    _maxCheckpointReachedAt = _timer.Now;
                 }
 
                 if (cp == CheckpointGenerator.NUM_CHECKPOINTS)
                 {
-                    LapFinishTime = DateTime.Now;
+                    LapFinishTime = _timer.Now;
                     DeactivateAndStall();
                 }
             }

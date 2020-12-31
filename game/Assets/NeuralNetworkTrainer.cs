@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Assets.Car;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Assets.Car;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
-using Random = UnityEngine.Random;
 
 public class NeuralNetworkTrainer : MonoBehaviour
 {
@@ -29,13 +28,15 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     [SerializeField] private CheckpointGenerator _checkpointGenerator = default;
 
+    [SerializeField] private LongRunningTimer _timer = default;
+
     // Internals
 
     private bool _evolveAfterRound;
 
     private List<NeuralCarInputSource> _neuralCars;
 
-    private DateTime? _lapStart;
+    private double? _lapStart;
 
     private TimeSpan?[] _trackRecords;
 
@@ -115,13 +116,14 @@ public class NeuralNetworkTrainer : MonoBehaviour
         Assert.IsNotNull(TrackSeeds);
         Assert.IsTrue(TrackSeeds.Length > 0);
         Assert.IsNotNull(Population);
+        Assert.IsNotNull(_timer);
 
         _neuralCars = SpawnCars();
 
         SkipTrack = false;
         TrackIndex = 0;
 
-        StartCoroutine(TrainingRoutine(Population, _neuralCars, TrackSeeds, _evolveAfterRound));
+        StartCoroutine(TrainingRoutine());
     }
 
     public void StopTraining()
@@ -142,19 +144,20 @@ public class NeuralNetworkTrainer : MonoBehaviour
         Generation = 1;
     }
 
-    private IEnumerator TrainingRoutine(Population population, List<NeuralCarInputSource> cars, int[] trackSeeds, bool evolve)
+    private IEnumerator TrainingRoutine()
     {
         double[] fitness = new double[Population.Size];
 
         while (true)
         {
-            for (TrackIndex = 0; TrackIndex < trackSeeds.Length; TrackIndex++)
+            for (TrackIndex = 0; TrackIndex < _trackSeeds.Length; TrackIndex++)
             {
-                _trackGen.Generate(trackSeeds[TrackIndex]);
+                _trackGen.Generate(_trackSeeds[TrackIndex]);
 
-                cars.ForEach(car => car.ResetRun());
+                _neuralCars.ForEach(car => car.ResetRun());
 
-                _lapStart = DateTime.Now;
+                _timer.Reset();
+                _lapStart = _timer.Now;
 
                 Time.timeScale = Mathf.Max(1f, NextRoundSpeedup);
 
@@ -163,16 +166,16 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 // Start driving only on fixed update frames; maybe that does something good :)
                 yield return new WaitForFixedUpdate();
 
-                cars.ForEach(car => car.ActivateAndStartDriving());
+                _neuralCars.ForEach(car => car.ActivateAndStartDriving());
 
                 yield return new WaitUntil(() =>
-                    cars.All(car => !car.IsActive) ||
+                    _neuralCars.All(car => !car.IsActive) ||
                     Input.GetKeyDown(KeyCode.N) ||
                     SkipTrack);
 
-                cars.ForEach(car => car.DeactivateAndStall());
+                _neuralCars.ForEach(car => car.DeactivateAndStall());
 
-                AddFitnessRatings(cars, fitness);
+                AddFitnessRatings(_neuralCars, fitness);
 
                 UpdateTrackRecord();
 
@@ -187,7 +190,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             {
                 var bestFolder = GameFolders.EnsureGameFolder(GameFolders.POPULATIONS);
                 var filePath = Path.Combine(bestFolder,
-                    $"Best-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}-{string.Join("-", trackSeeds)}.json");
+                    $"Best-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}-{string.Join("-", _trackSeeds)}.json");
 
                 Population.SaveTopN(filePath, fitness, SaveBestAfterRound);
 
@@ -198,17 +201,24 @@ public class NeuralNetworkTrainer : MonoBehaviour
             {
                 var populationFolder = GameFolders.EnsureGameFolder(GameFolders.POPULATIONS);
                 var filePath = Path.Combine(populationFolder,
-                    $"All-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}-{string.Join("-", trackSeeds)}.json");
+                    $"All-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}-{string.Join("-", _trackSeeds)}.json");
 
                 Population.SaveAll(filePath);
 
                 SaveAllAfterRound = false;
             }
 
-            if (evolve)
+            if (_evolveAfterRound)
             {
-                Population.Evolve(fitness);
-                Generation++;
+                if (fitness.All(f => f == 0.0))
+                {
+                    Debug.LogWarning("Fitness was zero for the enitre population. Skipping evolution");
+                }
+                else
+                {
+                    Population.Evolve(fitness);
+                    Generation++;
+                }
             }
 
             // Reset fitness
@@ -223,15 +233,15 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private void AddFitnessRatings(List<NeuralCarInputSource> cars, double[] fitness)
     {
-        var fastestFinish = DateTime.MinValue;
-        var slowestFinish = DateTime.MinValue;
+        var fastestFinish = 0.0;
+        var slowestFinish = 0.0;
         var fastestSlowestDelta = 0.0;
 
         try
         {
             fastestFinish = cars.Where(car => car.LapFinishTime.HasValue).Min(car => car.LapFinishTime.Value);
             slowestFinish = cars.Where(car => car.LapFinishTime.HasValue).Max(car => car.LapFinishTime.Value);
-            fastestSlowestDelta = (slowestFinish - fastestFinish).TotalSeconds * Time.timeScale;
+            fastestSlowestDelta = slowestFinish - fastestFinish;
         }
         catch { }
 
@@ -244,7 +254,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
             if (cars[i].LapFinishTime.HasValue && rateFinishTime)
             {
-                added += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish).TotalSeconds * Time.timeScale / fastestSlowestDelta);
+                added += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish) / fastestSlowestDelta);
             }
 
             //// Square fitness (per track) for faster learning
@@ -271,7 +281,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             var go = Instantiate(_neuralCarPrefab);
 
             var inputSource = go.GetComponent<NeuralCarInputSource>();
-            inputSource.Initialize(this, (ulong)idx, _checkpointGenerator);
+            inputSource.Initialize(this, (ulong)idx, _checkpointGenerator, _timer);
 
             var respawner = go.GetComponent<SpawnOnStartLine>();
             respawner.TrackGen = _trackGen;
@@ -287,7 +297,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
     {
         if (_lapStart.HasValue)
         {
-            return TimeSpan.FromSeconds((DateTime.Now - _lapStart.Value).TotalSeconds * Time.timeScale);
+            return TimeSpan.FromSeconds(_timer.Now - _lapStart.Value);
         }
         else
         {
@@ -302,7 +312,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
             try
             {
                 var bestLapTime = _neuralCars.Where(car => car.LapFinishTime.HasValue).Min(car => car.LapFinishTime.Value);
-                return TimeSpan.FromSeconds((bestLapTime - _lapStart.Value).TotalSeconds * Time.timeScale);
+                return TimeSpan.FromSeconds(bestLapTime - _lapStart.Value);
             }
             catch
             {
