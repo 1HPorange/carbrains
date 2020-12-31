@@ -257,9 +257,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 added += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish) / fastestSlowestDelta);
             }
 
-            //// Square fitness (per track) for faster learning
-            //// I won't do that for now because I'm scared that this leads the networks into local maxima
-            //added *= added;
+            // Square fitness (per track) for faster learning
+            added *= added;
 
             fitness[i] = added;
         }
