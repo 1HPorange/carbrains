@@ -119,6 +119,9 @@ namespace Assets.Car
                 _inputs[idx++] = _visionSource.FrontRight;
                 _inputs[idx++] = _visionSource.Right;
 
+                // Signed distance to center line (1)
+                _inputs[idx++] = _visionSource.Right - _visionSource.Left;
+
                 // Signed velocity (1)
                 _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up);
 

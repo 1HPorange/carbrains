@@ -31,6 +31,7 @@ impl Default for NeuralNetworkTemplate {
                     Activation::TanH,
                     Activation::TanH,
                     Activation::TanH,
+                    Activation::TanH,
                 ],
                 vec![Activation::TanH, Activation::TanH],
             ],
