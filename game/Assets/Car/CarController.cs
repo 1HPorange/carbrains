@@ -40,20 +40,20 @@ public class CarController : MonoBehaviour
 
         if (throttleBreak >= 0)
         {
-            _rigidBody.AddForce(transform.up * throttleBreak * AccelerationForce);
+            _rigidBody.AddForce(transform.up * throttleBreak * AccelerationForce, ForceMode2D.Impulse);
         }
         else
         {
             if (Vector2.Angle(transform.up, _rigidBody.velocity) < 90f)
             {
-                _rigidBody.AddForce(transform.up * throttleBreak * BreakingForce);
+                _rigidBody.AddForce(transform.up * throttleBreak * BreakingForce, ForceMode2D.Impulse);
             }
             else
             {
-                _rigidBody.AddForce(transform.up * throttleBreak * BackwardsForce);
+                _rigidBody.AddForce(transform.up * throttleBreak * BackwardsForce, ForceMode2D.Impulse);
             }
         }
         
-        _rigidBody.AddTorque(Mathf.Clamp((float)_inputSource.Steering, -1f, 1f) * -SteeringForce);
+        _rigidBody.AddTorque(Mathf.Clamp((float)_inputSource.Steering, -1f, 1f) * -SteeringForce, ForceMode2D.Impulse);
     }
 }

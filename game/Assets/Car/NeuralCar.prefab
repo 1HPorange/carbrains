@@ -99,10 +99,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96b76ac63b1c7f14e9390196de638ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AccelerationForce: 5
-  BreakingForce: 2.5
-  BackwardsForce: 1.5
-  SteeringForce: 0.75
+  AccelerationForce: 0.2
+  BreakingForce: 0.1
+  BackwardsForce: 0.05
+  SteeringForce: 0.0275
 --- !u!114 &4791778674396000401
 MonoBehaviour:
   m_ObjectHideFlags: 0

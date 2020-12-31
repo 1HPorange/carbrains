@@ -4392,6 +4392,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 6938908131531061864, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6938908131531061868, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -4405,7 +4410,7 @@ PrefabInstance:
     - target: {fileID: 6938908131531061868, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 6938908131531061868, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
         type: 3}
@@ -4446,6 +4451,26 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 6938908131531061870, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
+        type: 3}
+      propertyPath: SteeringForce
+      value: 0.0275
+      objectReference: {fileID: 0}
+    - target: {fileID: 6938908131531061870, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
+        type: 3}
+      propertyPath: AccelerationForce
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6938908131531061870, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
+        type: 3}
+      propertyPath: BreakingForce
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6938908131531061870, guid: 3a9d2f2c8a189ec43af8382fb29e6c03,
+        type: 3}
+      propertyPath: BackwardsForce
+      value: 0.05
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3a9d2f2c8a189ec43af8382fb29e6c03, type: 3}
