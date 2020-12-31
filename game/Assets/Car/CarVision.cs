@@ -9,37 +9,11 @@ public class CarVision : MonoBehaviour
 
     private RaycastHit2D[] _hitBuffer = new RaycastHit2D[1];
 
-    private int _lastCachedFrame = -1;
+    public float Front { get; private set; }
 
-    private float _front;
-    public float Front
-    {
-        get
-        {
-            Recalculate();
-            return _front;
-        }
-    }
+    public float FrontRight { get; private set; }
 
-    private float _frontRight;
-    public float FrontRight
-    {
-        get
-        {
-            Recalculate();
-            return _frontRight;
-        }
-    }
-
-    private float _right;
-    public float Right
-    {
-        get
-        {
-            Recalculate();
-            return _right;
-        }
-    }
+    public float Right { get; private set; }
 
     //public float BackRight { get; private set; }
 
@@ -47,24 +21,20 @@ public class CarVision : MonoBehaviour
 
     //public float BackLeft { get; private set; }
 
-    private float _left;
-    public float Left
-    {
-        get
-        {
-            Recalculate();
-            return _left;
-        }
-    }
+    public float Left { get; private set; }
 
-    private float _frontLeft;
-    public float FrontLeft
+    public float FrontLeft { get; private set; }
+
+    public void Recalculate()
     {
-        get
-        {
-            Recalculate();
-            return _frontLeft;
-        }
+        Front = GetRayLength(transform.up);
+        FrontRight = GetRayLength((transform.up + transform.right).normalized);
+        Right = GetRayLength(transform.right);
+        //BackRight = GetRayLength((transform.right - transform.up).normalized);
+        //Back = GetRayLength(-transform.up);
+        //BackLeft = GetRayLength((-transform.up - transform.right).normalized);
+        Left = GetRayLength(-transform.right);
+        FrontLeft = GetRayLength((transform.up - transform.right).normalized);
     }
 
     private void OnDrawGizmosSelected()
@@ -107,23 +77,6 @@ public class CarVision : MonoBehaviour
     {
         var whiteTransparent = new Color(1f, 1f, 1f, 0f);
         return Color.Lerp(Color.red, whiteTransparent, distance / 1.5f);
-    }
-
-    private void Recalculate()
-    {
-        if (_lastCachedFrame < Time.frameCount)
-        {
-            _front = GetRayLength(transform.up);
-            _frontRight = GetRayLength((transform.up + transform.right).normalized);
-            _right = GetRayLength(transform.right);
-            //BackRight = GetRayLength((transform.right - transform.up).normalized);
-            //Back = GetRayLength(-transform.up);
-            //BackLeft = GetRayLength((-transform.up - transform.right).normalized);
-            _left = GetRayLength(-transform.right);
-            _frontLeft = GetRayLength((transform.up - transform.right).normalized);
-
-            _lastCachedFrame = Time.frameCount;
-        }
     }
 
     private float GetRayLength(Vector2 direction)

@@ -116,6 +116,8 @@ namespace Assets.Car
                 var idx = 0;
 
                 // Vision (5)
+                _visionSource.Recalculate();
+
                 _inputs[idx++] = _visionSource.Left;
                 _inputs[idx++] = _visionSource.FrontLeft;
                 _inputs[idx++] = _visionSource.Front;

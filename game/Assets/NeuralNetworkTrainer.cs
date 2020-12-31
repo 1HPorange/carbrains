@@ -163,6 +163,9 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 OnTrackSwitch.Invoke();
 
+                // Give the user a bit of time to use the UI between the horrible lags
+                yield return new WaitForSecondsRealtime(1.5f);
+
                 // Start driving only on fixed update frames; maybe that does something good :)
                 yield return new WaitForFixedUpdate();
 
@@ -184,6 +187,9 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 // Prevent skip track from triggering multiple times
                 SkipTrack = false;
+
+                // Give the user a bit of time to see the results of the round
+                yield return new WaitForSecondsRealtime(1.5f);
             }
 
             if (SaveBestAfterRound > 0)
