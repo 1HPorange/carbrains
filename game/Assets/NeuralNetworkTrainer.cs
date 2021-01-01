@@ -156,15 +156,15 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 _neuralCars.ForEach(car => car.ResetRun());
 
+                // Give the user a bit of time to use the UI between the horrible lags
+                yield return new WaitForSecondsRealtime(1.5f);
+
                 _timer.Reset();
                 _lapStart = _timer.Now;
 
                 Time.timeScale = Mathf.Max(1f, NextRoundSpeedup);
 
                 OnTrackSwitch.Invoke();
-
-                // Give the user a bit of time to use the UI between the horrible lags
-                yield return new WaitForSecondsRealtime(1.5f);
 
                 // Start driving only on fixed update frames; maybe that does something good :)
                 yield return new WaitForFixedUpdate();
