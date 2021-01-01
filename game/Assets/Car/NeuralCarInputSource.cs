@@ -124,37 +124,35 @@ namespace Assets.Car
                 _inputs[idx++] = _visionSource.FrontRight;
                 _inputs[idx++] = _visionSource.Right;
 
-                // Signed distance to center line (1)
+                // Signed distance to center line when driving straight (1)
                 _inputs[idx++] = _visionSource.Right - _visionSource.Left;
 
                 // Signed velocity (1)
                 _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up);
 
+                // Square velocity (1)
+                _inputs[idx++] = _rigidbody2D.velocity.sqrMagnitude;
+
                 // 2D Velocity (2)
                 _inputs[idx++] = _rigidbody2D.velocity.x;
                 _inputs[idx++] = _rigidbody2D.velocity.y;
 
-                // Own orientation and position (3)
-                _inputs[idx++] = transform.position.x;
-                _inputs[idx++] = transform.position.y;
-                _inputs[idx++] = transform.rotation.z;
+                // Upcoming checkpoint distances (10, 20, 30, 40) (8)
+                var cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 10) - (Vector2)transform.position;
+                _inputs[idx++] = cpDistance.x;
+                _inputs[idx++] = cpDistance.y;
 
-                // Upcoming checkpoint positions (10, 20, 30, 40) (8)
-                var cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 10);
-                _inputs[idx++] = cp.x;
-                _inputs[idx++] = cp.y;
+                cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 20) - (Vector2)transform.position;
+                _inputs[idx++] = cpDistance.x;
+                _inputs[idx++] = cpDistance.y;
 
-                cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 20);
-                _inputs[idx++] = cp.x;
-                _inputs[idx++] = cp.y;
+                cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 30) - (Vector2)transform.position;
+                _inputs[idx++] = cpDistance.x;
+                _inputs[idx++] = cpDistance.y;
 
-                cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 30);
-                _inputs[idx++] = cp.x;
-                _inputs[idx++] = cp.y;
-
-                cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + 40);
-                _inputs[idx++] = cp.x;
-                _inputs[idx++] = cp.y;
+                cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 40) - (Vector2)transform.position;
+                _inputs[idx++] = cpDistance.x;
+                _inputs[idx++] = cpDistance.y;
             }
             catch { }
 
