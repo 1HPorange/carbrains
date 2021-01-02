@@ -59,8 +59,10 @@ public class RaceTrackGenerator : MonoBehaviour
         }
     }
 
-    public void Generate(int seed)
+    public void Generate(int? seedHint)
     {
+        var seed = seedHint ?? Random.Range(int.MinValue, int.MaxValue);
+
         GenerateInternal(seed);
 
         RaceTrackGenerated.Invoke(_racetrack);

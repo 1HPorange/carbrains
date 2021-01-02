@@ -21,7 +21,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &6938908131531061868
 Transform:
   m_ObjectHideFlags: 0
@@ -98,10 +98,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96b76ac63b1c7f14e9390196de638ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AccelerationForce: 5
-  BreakingForce: 2.5
-  BackwardsForce: 1.5
-  SteeringForce: 0.75
+  AccelerationForce: 0.15
+  BreakingForce: 0.1
+  BackwardsForce: 0.05
+  SteeringForce: 0.0275
 --- !u!114 &-3070704417215103453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -140,7 +140,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 1.5
+  m_LinearDrag: 2
   m_AngularDrag: 30
   m_GravityScale: 0
   m_Material: {fileID: 0}

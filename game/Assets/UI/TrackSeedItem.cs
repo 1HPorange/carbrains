@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class TrackSeedItem : MonoBehaviour
 {
-    public int TrackSeed { get; set; }
+    public int? TrackSeed { get; set; }
 
     public TrackPanel TrackPanel { get; set; }
 
@@ -26,13 +26,20 @@ public class TrackSeedItem : MonoBehaviour
 
     private void Start()
     {
-        _seedLabel.text = TrackSeed.ToString();
+        _seedLabel.text = TrackSeed.HasValue ? TrackSeed.Value.ToString() : "Random";
 
-        _copyButton.onClick.AddListener(() => GUIUtility.systemCopyBuffer = TrackSeed.ToString());
+        if (TrackSeed.HasValue)
+        {
+            _copyButton.onClick.AddListener(() => GUIUtility.systemCopyBuffer = TrackSeed.ToString());
+            _viewButton.onClick.AddListener(() => TrackPanel.ViewTrack(TrackSeed));
+        }
+        else
+        {
+            Destroy(_copyButton.gameObject);
+            Destroy(_viewButton.gameObject);
+        }
 
-        _viewButton.onClick.AddListener(() => TrackPanel.ViewTrack(TrackSeed));
-
-        _removeButton.onClick.AddListener(() => TrackPanel.RemoveTrackItem(TrackSeed));
+        _removeButton.onClick.AddListener(() => TrackPanel.RemoveTrackItem(transform.GetSiblingIndex()));
     }
 
     private void Update()

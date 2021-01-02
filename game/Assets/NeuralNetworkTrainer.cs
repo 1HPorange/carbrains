@@ -67,9 +67,9 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     public bool SkipTrack { get; set; }
 
-    private int[] _trackSeeds;
+    private int?[] _trackSeeds;
 
-    public int[] TrackSeeds
+    public int?[] TrackSeeds
     {
         get => _trackSeeds;
         set {
@@ -323,7 +323,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private TimeSpan? CalcFastestLapTime()
     {
-        if (_lapStart.HasValue)
+        // Fastest laptimes only make sense for tracks that are not randomly generated
+        if (_lapStart.HasValue && _trackSeeds?[TrackIndex] != null)
         {
             try
             {

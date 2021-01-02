@@ -12,14 +12,14 @@ public class TrackPanel : MonoBehaviour
     // Events
 
     [Serializable]
-    public class TrackSeedEvent : UnityEvent<int> { }
+    public class TrackSeedEvent : UnityEvent<int?> { }
 
     public TrackSeedEvent OnGenerateTrackRequest;
 
     public UnityEvent OnCancelled;
 
     [Serializable]
-    public class TrackSeedCollectionEvent : UnityEvent<int[]> { }
+    public class TrackSeedCollectionEvent : UnityEvent<int?[]> { }
 
     public TrackSeedCollectionEvent OnTrackSeedsSelected;
 
@@ -39,6 +39,8 @@ public class TrackPanel : MonoBehaviour
 
     [SerializeField] private Button _proceedButton = default;
 
+    [SerializeField] private Button _addRandomButton = default;
+
     // Internals
 
     private List<TrackSeedItem> _trackSeeds;
@@ -49,7 +51,7 @@ public class TrackPanel : MonoBehaviour
 
         _trackSeeds.ForEach(s => s.GetComponent<CanvasGroup>().interactable = true);
 
-        _generateButton.onClick.Invoke();
+        GenerateNewTrack();
     }
 
     public void Freeze()
@@ -59,11 +61,11 @@ public class TrackPanel : MonoBehaviour
         _trackSeeds.ForEach(s => s.GetComponent<CanvasGroup>().interactable = false);
     }
 
-    public void RemoveTrackItem(int seed)
+    public void RemoveTrackItem(int siblingIndex)
     {
         try
         {
-            var item = _trackSeeds.SingleOrDefault(s => s.TrackSeed == seed);
+            var item = _trackSeeds.SingleOrDefault(s => s.transform.GetSiblingIndex() == siblingIndex);
             Destroy(item.gameObject);
             _trackSeeds.Remove(item);
         }
@@ -73,7 +75,7 @@ public class TrackPanel : MonoBehaviour
         }
     }
 
-    public void ViewTrack(int seed)
+    public void ViewTrack(int? seed)
     {
         OnGenerateTrackRequest.Invoke(seed);
     }
@@ -108,9 +110,14 @@ public class TrackPanel : MonoBehaviour
                 var seed = int.Parse(_seedInput.text);
                 AddTrackItem(seed);
 
-                _generateButton.onClick.Invoke();
+                GenerateNewTrack();
             }
             catch { }
+        });
+
+        _addRandomButton.onClick.AddListener(() =>
+        {
+            AddTrackItem(null);
         });
 
         _cancelButton.onClick.AddListener(() =>
@@ -125,9 +132,6 @@ public class TrackPanel : MonoBehaviour
             OnTrackSeedsSelected.Invoke(_trackSeeds.Select(item => item.TrackSeed).ToArray());
         });
 
-        // Generate a new seed once on application start
-        GenerateNewTrack();
-
         Freeze();
     }
 
@@ -136,7 +140,7 @@ public class TrackPanel : MonoBehaviour
         _proceedButton.interactable = _trackSeeds.Count > 0;
     }
 
-    private void AddTrackItem(int seed)
+    private void AddTrackItem(int? seed)
     {
         _trackItemPrefab.SetActive(false);
         var itemGameObject = Instantiate(_trackItemPrefab, _trackItemParent);
