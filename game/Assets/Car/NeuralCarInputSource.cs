@@ -11,6 +11,8 @@ namespace Assets.Car
     [RequireComponent(typeof(CarVision), typeof(SpawnOnStartLine), typeof(CarController))]
     public class NeuralCarInputSource : MonoBehaviour, ICarInputSource
     {
+        private static readonly int[] CHECKPOINT_VISION_OFFSETS = new[] { 5, 10, 15, 20, 25 };
+
         public bool IsActive { get; private set; }
 
         public double ThrottleBreak => _outputs[0];
@@ -102,14 +104,6 @@ namespace Assets.Car
             GetComponent<SpawnOnStartLine>().Respawn();
         }
 
-        /// <summary>
-        /// Scales the input so that is is 0 in generation <see cref="minGeneration"/> and before, and 1 in generation <see cref="maxGeneration"/>
-        /// </summary>
-        private double ScaleInputWithGeneration(double value, int minGeneration, int maxGeneration)
-        {
-            return value * Mathf.Clamp01((float)(_trainer.Generation - minGeneration) / (float)(maxGeneration - minGeneration));
-        }
-
         public void AdvanceTimestep()
         {
             if (!IsActive)
@@ -144,28 +138,19 @@ namespace Assets.Car
                 _inputs[idx++] = _visionSource.Right - _visionSource.Left;
 
                 // Square velocity (1)
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude, 60, 120);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude, 60, 90);
 
                 // 2D Velocity (2)
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 90, 150);
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 90, 150);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 90, 120);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 90, 120);
 
-                // Upcoming checkpoint distances (10, 20, 30, 40) (8)
-                var cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 10) - (Vector2)transform.position;
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
-
-                cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 20) - (Vector2)transform.position;
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
-
-                cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 30) - (Vector2)transform.position;
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
-
-                cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 40) - (Vector2)transform.position;
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
-                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
+                // Upcoming checkpoint distances CHECKPOINT_VISION_OFFSETS.Length * 2
+                foreach (var offset in CHECKPOINT_VISION_OFFSETS)
+                {
+                    var pos = GetCheckpointPosLocal(offset);
+                    _inputs[idx++] = ScaleInputWithGeneration(pos.x, 120, 180);
+                    _inputs[idx++] = ScaleInputWithGeneration(pos.y, 120, 180);
+                }
             }
             catch { }
 
@@ -173,6 +158,25 @@ namespace Assets.Car
             _trainer.Population.EvaluateMember(_memberIndex, _inputs, _outputs);
 
             _carController.AddForces();
+        }
+
+        /// <summary>
+        /// Scales the input so that is is 0 in generation <see cref="minGeneration"/> and before, and 1 in generation <see cref="maxGeneration"/>
+        /// </summary>
+        private double ScaleInputWithGeneration(double value, int minGeneration, int maxGeneration)
+        {
+            return value * Mathf.Clamp01((float)(_trainer.Generation - minGeneration) / (float)(maxGeneration - minGeneration));
+        }
+
+        /// <summary>
+        /// Returns an upcoming checkpoint's position (based on the current checkpoint) in local space
+        /// </summary>
+        /// <param name="checkpointOffset"></param>
+        /// <returns></returns>
+        private Vector2 GetCheckpointPosLocal(int checkpointOffset)
+        {
+            var cp = _checkpointGenerator.GetCheckpointPos(Checkpoint + checkpointOffset);
+            return transform.InverseTransformPoint(cp);
         }
 
         private void Update()
@@ -221,6 +225,24 @@ namespace Assets.Car
                     LapFinishTime = _timer.Now;
                     DeactivateAndStall();
                 }
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            Gizmos.color = Color.green;
+
+            foreach (var offset in CHECKPOINT_VISION_OFFSETS)
+            {
+
+                var pos = GetCheckpointPosLocal(offset);                
+
+                Gizmos.DrawRay(transform.position, transform.TransformPoint(pos) - transform.position);
             }
         }
     }
