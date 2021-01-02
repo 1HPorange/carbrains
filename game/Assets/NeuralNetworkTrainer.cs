@@ -63,6 +63,13 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     public ulong SaveBestAfterRound { get; set; }
 
+    /// <summary>
+    /// Note that speed bonuses are squared regardless of this setting
+    /// </summary>
+    public bool SquareFitnessAfterTrack { get; set; }
+
+    public bool SquareFitnessAfterSet { get; set; }
+
     public bool SkipTrack { get; set; }
 
     private int?[] _trackSeeds;
@@ -146,6 +153,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
         NextRoundSpeedup = 1;
         _lapStart = null;
         Leniency = 1.0;
+        SquareFitnessAfterTrack = true;
+        SquareFitnessAfterSet = true;
     }
 
     private IEnumerator TrainingRoutine()
@@ -230,7 +239,10 @@ public class NeuralNetworkTrainer : MonoBehaviour
                     fitness[i] += speedBonusFitness[i];
                 }
 
-                fitness[i] *= fitness[i];
+                if (SquareFitnessAfterSet)
+                {
+                    fitness[i] *= fitness[i];
+                }
             }
 
             if (SaveBestAfterRound > 0)
@@ -328,8 +340,10 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 added += _flatFinishBonus;
             }
 
-            // Square fitness (per track) for faster learning
-            added *= added;
+            if (SquareFitnessAfterTrack)
+            {
+                added *= added;
+            }
 
             fitness[i] += added;
         }

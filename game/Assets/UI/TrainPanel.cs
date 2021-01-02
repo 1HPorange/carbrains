@@ -21,6 +21,10 @@ public class TrainPanel : MonoBehaviour
 
     public ToggleEvent OnSaveAllToggled;
 
+    public ToggleEvent OnSquareFitnessAfterTrackToggled;
+
+    public ToggleEvent OnSquareFitnessAfterSetToggled;
+
     [Serializable]
     public class CountEvent : UnityEvent<ulong> { }
 
@@ -41,6 +45,10 @@ public class TrainPanel : MonoBehaviour
     [SerializeField] private Button _speedupIncrButton = default;
 
     [SerializeField] private Button _speedupDecrButton = default;
+
+    [SerializeField] private Toggle _sqrFitnessAfterTrackToggle = default;
+
+    [SerializeField] private Toggle _sqrFitnessAfterSetToggle = default;
 
     [SerializeField] private Toggle _saveAllToggle = default;
 
@@ -113,6 +121,10 @@ public class TrainPanel : MonoBehaviour
             
             OnSpeedupChanged.Invoke(_speedup);
         });
+
+        _sqrFitnessAfterTrackToggle.onValueChanged.AddListener(v => OnSquareFitnessAfterTrackToggled.Invoke(v));
+
+        _sqrFitnessAfterSetToggle.onValueChanged.AddListener(v => OnSquareFitnessAfterSetToggled.Invoke(v));
 
         _saveAllToggle.onValueChanged.AddListener(v => OnSaveAllToggled.Invoke(v));
 
