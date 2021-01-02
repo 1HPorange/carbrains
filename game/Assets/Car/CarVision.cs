@@ -32,6 +32,11 @@ public class CarVision : MonoBehaviour
     /// </summary>
     public uint Age { get; private set; }
 
+    public void ResetAge()
+    {
+        Age = 0;
+    }
+
     public void Recalculate()
     {
         if (Age != SkipFrames)

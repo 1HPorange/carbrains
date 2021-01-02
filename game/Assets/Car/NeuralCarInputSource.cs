@@ -97,6 +97,8 @@ namespace Assets.Car
 
             DeactivateAndStall();
 
+            _visionSource.ResetAge();
+
             GetComponent<SpawnOnStartLine>().Respawn();
         }
 
@@ -175,6 +177,7 @@ namespace Assets.Car
 
         private void Update()
         {
+            // TODO: Move this somewhere smarter
             if (IsActive)
             {
                 _renderer.color = _color;
