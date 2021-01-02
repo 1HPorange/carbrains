@@ -29,7 +29,7 @@ public class CarController : MonoBehaviour
         _inputSource = inputSource;
     }
 
-    private void FixedUpdate()
+    public void AddForces()
     {
         if (!_inputSource.IsActive)
         {

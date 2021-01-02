@@ -13,8 +13,6 @@ public class NeuralNetworkTrainer : MonoBehaviour
 {
     // Events
 
-    public UnityEvent OnTrackSwitch;
-
     public UnityEvent OnRoundSwitch;
 
     public UnityEvent OnPopulationCreated;
@@ -51,7 +49,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     public TimeSpan? FastestLapTime => CalcFastestLapTime();
 
-    public double Leniency => CalcLeniency();
+    public double Leniency { get; private set; }
 
     public int Generation { get; private set; }
 
@@ -59,7 +57,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     public int TrackCount => TrackSeeds == null ? 1 : TrackSeeds.Length;
 
-    public float NextRoundSpeedup { get; set; }
+    public float? NextRoundSpeedup { get; set; }
 
     public bool SaveAllAfterRound { get; set; }
 
@@ -126,6 +124,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
         SkipTrack = false;
         TrackIndex = 0;
 
+        Physics2D.autoSimulation = false;
+
         StartCoroutine(TrainingRoutine());
     }
 
@@ -133,28 +133,34 @@ public class NeuralNetworkTrainer : MonoBehaviour
     {
         StopAllCoroutines();
 
-        RemovePopulation(false);
+        Physics2D.autoSimulation = true;
 
-        Time.timeScale = 1f;
+        RemovePopulation(false);
 
         _lapStart = null;
     }
 
     private void Awake()
     {
-        StopTraining();
-
         Generation = 1;
+        NextRoundSpeedup = 1;
+        _lapStart = null;
+        Leniency = 1.0;
     }
 
     private IEnumerator TrainingRoutine()
     {
+        // Wait one frame so all cars are properly spawned in and initialized
+        yield return null;
+
         double[] fitness = new double[Population.Size];
 
         while (true)
         {
             for (TrackIndex = 0; TrackIndex < _trackSeeds.Length; TrackIndex++)
             {
+                // Prepate track and cars
+                // -------------------------------------------------------------------------
                 _trackGen.Generate(_trackSeeds[TrackIndex]);
 
                 _neuralCars.ForEach(car => car.ResetRun());
@@ -162,22 +168,40 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 _timer.Reset();
                 _lapStart = _timer.Now;
 
-                Time.timeScale = Mathf.Max(1f, NextRoundSpeedup);
-
-                OnTrackSwitch.Invoke();
-
-                // Start driving only on fixed update frames; maybe that does something good :)
-                yield return new WaitForFixedUpdate();
-
+                // Run the simulation for the current track
+                // -------------------------------------------------------------------------
                 _neuralCars.ForEach(car => car.ActivateAndStartDriving());
 
-                yield return new WaitUntil(() =>
-                    _neuralCars.All(car => !car.IsActive) ||
-                    Input.GetKeyDown(KeyCode.N) ||
-                    SkipTrack);
+                var realtimeWithoutPhysicsFrame = 0f;
+                while (!(_neuralCars.All(car => !car.IsActive) ||
+                         Input.GetKeyDown(KeyCode.N) ||
+                         SkipTrack))
+                {
+                    if (NextRoundSpeedup.HasValue)
+                    {
+                        // Calculate physics based on real time
+                        while (realtimeWithoutPhysicsFrame >= Time.fixedDeltaTime)
+                        {
+                            AdvanceTimestep();
+
+                            realtimeWithoutPhysicsFrame -= Time.fixedUnscaledDeltaTime;
+                        }
+                    }
+                    else
+                    {
+                        // Calculate physics as fast as we can render
+                        AdvanceTimestep();
+                    }
+
+                    // Advance frame
+                    yield return null;
+                    realtimeWithoutPhysicsFrame += Time.unscaledDeltaTime * (NextRoundSpeedup ?? 1f);
+                }
 
                 _neuralCars.ForEach(car => car.DeactivateAndStall());
 
+                // Evaluate the simulation for the current track
+                // -------------------------------------------------------------------------
                 AddFitnessRatings(fitness);
 
                 // Prevent pressing N triggering a track skip multiple times
@@ -187,7 +211,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 SkipTrack = false;
 
                 // Give the user a bit of time to see the results of the round
-                yield return new WaitForSecondsRealtime(3f);
+                yield return new WaitForSecondsRealtime(0.5f);
 
                 UpdateTrackRecord();
             }
@@ -241,6 +265,14 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
             OnRoundSwitch.Invoke();
         }
+    }
+
+    private void AdvanceTimestep()
+    {
+        _neuralCars.ForEach(car => car.AdvanceTimestep());
+        Physics2D.Simulate(Time.fixedDeltaTime);
+        _timer.AdvanceTimestep();
+        ReculculateLeniency();
     }
 
     private void AddFitnessRatings(double[] fitness)
@@ -343,28 +375,17 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
     }
 
-    private bool _recalculateLeniency = true;
-
-    private double _leniency = 1.0;
-
-    private double CalcLeniency()
+    private void ReculculateLeniency()
     {
-        if (_recalculateLeniency)
+        if (null != _neuralCars)
         {
-            if (null != _neuralCars)
-            {
-                // TODO: Make this formula configurable
-                _leniency = Math.Max(0.0, 1.0 - (4.0 * (double)_neuralCars.Count(car => car.LapFinishTime.HasValue)) / (double)_neuralCars.Count);
-            }
-            else
-            {
-                _leniency = 1.0;
-            }
-
-            _recalculateLeniency = false;
+            // TODO: Make this formula configurable
+            Leniency = Math.Max(0.0, 1.0 - (double)_neuralCars.Count(car => car.LapFinishTime.HasValue)) / ((double)_neuralCars.Count * 0.75f);
         }
-
-        return _leniency;
+        else
+        {
+            Leniency = 1.0;
+        }
     }
 
     private void RemovePopulation(bool dispose)
@@ -377,11 +398,6 @@ public class NeuralNetworkTrainer : MonoBehaviour
             Population?.Dispose();
             Population = null;
         }
-    }
-
-    private void FixedUpdate()
-    {
-        _recalculateLeniency = true;
     }
 
     private void OnDestroy()

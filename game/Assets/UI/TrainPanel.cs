@@ -12,7 +12,7 @@ public class TrainPanel : MonoBehaviour
     // Events
 
     [Serializable]
-    public class SpeedupEvent : UnityEvent<float> { }
+    public class SpeedupEvent : UnityEvent<float?> { }
 
     public SpeedupEvent OnSpeedupChanged;
 
@@ -54,7 +54,7 @@ public class TrainPanel : MonoBehaviour
 
     // Internals
 
-    private int _speedup;
+    private int? _speedup;
 
     private bool _isRunning;
 
@@ -83,15 +83,34 @@ public class TrainPanel : MonoBehaviour
 
         _speedupIncrButton.onClick.AddListener(() =>
         {
-            _speedup++;
+            if (_speedup.HasValue)
+            {
+                _speedup++;
+            }
+            else
+            {
+                _speedup = 1;
+                _speedupDecrButton.interactable = true;
+            }
+
             _speedupLabel.text = _speedup.ToString();
             OnSpeedupChanged.Invoke(_speedup);
         });
 
         _speedupDecrButton.onClick.AddListener(() =>
         {
-            _speedup = Mathf.Max(1, _speedup - 1);
-            _speedupLabel.text = _speedup.ToString();
+            if (_speedup.Value == 1)
+            {
+                _speedup = null;
+                _speedupLabel.text = "Adaptive";
+                _speedupDecrButton.interactable = false;
+            }
+            else
+            {
+                _speedup--;
+                _speedupLabel.text = _speedup.ToString();
+            }
+            
             OnSpeedupChanged.Invoke(_speedup);
         });
 

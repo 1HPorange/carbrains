@@ -12,8 +12,8 @@ public class LongRunningTimer : MonoBehaviour
         Now = 0.0;
     }
 
-    private void FixedUpdate()
+    public void AdvanceTimestep()
     {
-        Now += Time.deltaTime;
+        Now += Time.fixedDeltaTime;
     }
 }

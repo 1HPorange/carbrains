@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 namespace Assets.Car
 {
-    [RequireComponent(typeof(CarVision), typeof(SpawnOnStartLine))]
+    [RequireComponent(typeof(CarVision), typeof(SpawnOnStartLine), typeof(CarController))]
     public class NeuralCarInputSource : MonoBehaviour, ICarInputSource
     {
         public bool IsActive { get; private set; }
@@ -35,6 +35,8 @@ namespace Assets.Car
 
         private SpriteRenderer _renderer;
 
+        private CarController _carController;
+
         private int _maxCheckpoint = 0;
 
         private double _maxCheckpointReachedAt;
@@ -53,6 +55,7 @@ namespace Assets.Car
             _visionSource = GetComponent<CarVision>();
             _rigidbody2D = GetComponent<Rigidbody2D>();
             _renderer = GetComponent<SpriteRenderer>();
+            _carController = GetComponent<CarController>();
 
             _color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.75f, 1f);
         }
@@ -105,7 +108,7 @@ namespace Assets.Car
             return value * Mathf.Clamp01((float)(_trainer.Generation - minGeneration) / (float)(maxGeneration - minGeneration));
         }
 
-        private void FixedUpdate()
+        public void AdvanceTimestep()
         {
             if (!IsActive)
             {
@@ -133,10 +136,10 @@ namespace Assets.Car
                 _inputs[idx++] = _visionSource.Right;
 
                 // Signed velocity (1)
-                _inputs[idx++] = ScaleInputWithGeneration(Vector3.Dot(_rigidbody2D.velocity, transform.up), 0, 30);
+                _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up);
 
                 // Signed distance to center line when driving straight (1)
-                _inputs[idx++] = ScaleInputWithGeneration(_visionSource.Right - _visionSource.Left, 30, 60);
+                _inputs[idx++] = _visionSource.Right - _visionSource.Left;
 
                 // Square velocity (1)
                 _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude, 60, 120);
@@ -166,6 +169,8 @@ namespace Assets.Car
 
 
             _trainer.Population.EvaluateMember(_memberIndex, _inputs, _outputs);
+
+            _carController.AddForces();
         }
 
         private void Update()
