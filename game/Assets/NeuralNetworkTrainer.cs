@@ -154,6 +154,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
         yield return null;
 
         double[] fitness = new double[Population.Size];
+        double[] speedBonusFitness = new double[Population.Size];
+        int[] tracksFinished = new int[Population.Size];
 
         while (true)
         {
@@ -163,10 +165,12 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 // -------------------------------------------------------------------------
                 _trackGen.Generate(_trackSeeds[TrackIndex]);
 
-                _neuralCars.ForEach(car => car.ResetRun());
-
                 _timer.Reset();
                 _lapStart = _timer.Now;
+
+                _neuralCars.ForEach(car => car.ResetRun());
+
+                ReculculateLeniency();
 
                 // Run the simulation for the current track
                 // -------------------------------------------------------------------------
@@ -202,7 +206,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 // Evaluate the simulation for the current track
                 // -------------------------------------------------------------------------
-                AddFitnessRatings(fitness);
+                AddFitnessRatings(fitness, speedBonusFitness, tracksFinished);
 
                 // Prevent pressing N triggering a track skip multiple times
                 yield return null;
@@ -216,9 +220,16 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 UpdateTrackRecord();
             }
 
-            // Square fitness
-            for (int i = 0; i < fitness.Length; i++)
+            // Post-process fitness after a complete set of tracks
+            var minTracksFinishedForBonus = (TrackSeeds.Length + 1) / 2; // TODO: Make configurable
+            for (int i = 0; i < _neuralCars.Count; i++)
             {
+                // Apply speed-bonus fitness if applicable
+                if (tracksFinished[i] >= minTracksFinishedForBonus)
+                {
+                    fitness[i] += speedBonusFitness[i];
+                }
+
                 fitness[i] *= fitness[i];
             }
 
@@ -261,6 +272,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
             for (int i = 0; i < fitness.Length; i++)
             {
                 fitness[i] = 0.0;
+                speedBonusFitness[i] = 0.0;
+                tracksFinished[i] = 0;
             }
 
             OnRoundSwitch.Invoke();
@@ -275,7 +288,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         ReculculateLeniency();
     }
 
-    private void AddFitnessRatings(double[] fitness)
+    private void AddFitnessRatings(double[] fitness, double[] speedBonusFitness, int[] tracksFinished)
     {
         var fastestFinish = 0.0;
         var slowestFinish = 0.0;
@@ -289,6 +302,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
         catch { }
 
+        // Only rate finish times if a minimum amount of cars finished with different times
         var rateFinishTime = fastestSlowestDelta > 0.0 && // TODO: Make the 0.1f below configurable
                              _neuralCars.Count(car => car.LapFinishTime.HasValue) > Mathf.RoundToInt(0.1f * Population.Size);
 
@@ -300,9 +314,17 @@ public class NeuralNetworkTrainer : MonoBehaviour
             {
                 if (rateFinishTime)
                 {
-                    added += 0.5 * (1.0 - (_neuralCars[i].LapFinishTime.Value - fastestFinish) / fastestSlowestDelta);
+                    // TODO: Make this formula configurable
+
+                    // Range: 0-1 depending on how fast you were (linear)
+                    var speedBonusStrength =
+                        1.0 - (_neuralCars[i].LapFinishTime.Value - fastestFinish) / fastestSlowestDelta;
+
+                    // We square it so small time saves get bigger bonuses
+                    speedBonusFitness[i] += 0.5 * speedBonusStrength * speedBonusStrength;
                 }
 
+                tracksFinished[i]++;
                 added += _flatFinishBonus;
             }
 
@@ -380,7 +402,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         if (null != _neuralCars)
         {
             // TODO: Make this formula configurable
-            Leniency = Math.Max(0.0, 1.0 - (double)_neuralCars.Count(car => car.LapFinishTime.HasValue)) / ((double)_neuralCars.Count * 0.75f);
+            Leniency = Math.Max(0.0, 1.0 - (double)_neuralCars.Count(car => car.LapFinishTime.HasValue) / ((double)_neuralCars.Count * 0.75f));
         }
         else
         {

@@ -1,14 +1,16 @@
-- [ ] Revert CarController, but add * Time.fixeddeltatime to allow prefab to work
-- [ ] Revert CarVision
+- [X] Revert CarController, but add * Time.fixeddeltatime to allow prefab to work
+- [X] Revert CarVision
 - [ ] Checkout and manual merge NeuralCarInputSource and NeuralNetworkTrainer
 - [ ] More checkpoints as input
 - [ ] Normal distribution option for mutation shit
 - [ ] Make it so you can reload with smaller populations; Make return type short instead of ushort to display a warning here
 - [ ] Normalize the network and look up what that does
-- [ ] Application targetFramerate anschauen in trainer
-- [ ] Car vision needs reset method and needs to be called on car reset
+- [X] Application targetFramerate anschauen in trainer
+- [X] Car vision needs reset method and needs to be called on car reset
 - [ ] Redo memory neurons as feedback neuros and make them configurable
 - [ ] Implement actual memory neurons
-- [ ] Adaptive time using manual physics stepping and timers... oh boy; Only give choice between adaptive and real-time (maybe?)
-- [ ] Update leniency manually in trainer, call just returns stored field
-- [ ] See that no fixedupdate survives
+- [X] Adaptive time using manual physics stepping and timers... oh boy; Only give choice between adaptive and real-time (maybe?)
+- [X] Update leniency manually in trainer, call just returns stored field
+- [X] See that no fixedupdate survives
+- [ ] Settings for squaring fitness after each track & round
+- [ ] Give cars damage
