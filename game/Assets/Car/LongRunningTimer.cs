@@ -12,7 +12,7 @@ public class LongRunningTimer : MonoBehaviour
         Now = 0.0;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         Now += Time.deltaTime;
     }

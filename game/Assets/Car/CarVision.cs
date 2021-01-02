@@ -7,7 +7,9 @@ public class CarVision : MonoBehaviour
     [SerializeField]
     private LayerMask _rayMask;
 
-    private RaycastHit2D[] _hitBuffer = new RaycastHit2D[1];
+    [SerializeField] private uint SkipFrames = 3;
+
+    private readonly RaycastHit2D[] _hitBuffer = new RaycastHit2D[1];
 
     public float Front { get; private set; }
 
@@ -25,8 +27,23 @@ public class CarVision : MonoBehaviour
 
     public float FrontLeft { get; private set; }
 
+    /// <summary>
+    /// From how many frames ago the returned values are. Can be between 0 and <see cref="SkipFrames"/>
+    /// </summary>
+    public uint Age { get; private set; }
+
     public void Recalculate()
     {
+        if (Age != SkipFrames)
+        {
+            Age++;
+            return;
+        }
+        else
+        {
+            Age = 0;
+        }
+
         Front = GetRayLength(transform.up);
         FrontRight = GetRayLength((transform.up + transform.right).normalized);
         Right = GetRayLength(transform.right);

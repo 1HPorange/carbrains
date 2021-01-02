@@ -7,6 +7,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
+using UnityEngine.PlayerLoop;
 
 public class NeuralNetworkTrainer : MonoBehaviour
 {
@@ -29,6 +30,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
     [SerializeField] private CheckpointGenerator _checkpointGenerator = default;
 
     [SerializeField] private LongRunningTimer _timer = default;
+
+    [SerializeField] private double _flatFinishBonus = 0.2;
 
     // Internals
 
@@ -156,9 +159,6 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 _neuralCars.ForEach(car => car.ResetRun());
 
-                // Give the user a bit of time to use the UI between the horrible lags
-                yield return new WaitForSecondsRealtime(1.5f);
-
                 _timer.Reset();
                 _lapStart = _timer.Now;
 
@@ -178,9 +178,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
                 _neuralCars.ForEach(car => car.DeactivateAndStall());
 
-                AddFitnessRatings(_neuralCars, fitness);
-
-                UpdateTrackRecord();
+                AddFitnessRatings(fitness);
 
                 // Prevent pressing N triggering a track skip multiple times
                 yield return null;
@@ -189,7 +187,15 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 SkipTrack = false;
 
                 // Give the user a bit of time to see the results of the round
-                yield return new WaitForSecondsRealtime(1.5f);
+                yield return new WaitForSecondsRealtime(3f);
+
+                UpdateTrackRecord();
+            }
+
+            // Square fitness
+            for (int i = 0; i < fitness.Length; i++)
+            {
+                fitness[i] *= fitness[i];
             }
 
             if (SaveBestAfterRound > 0)
@@ -237,7 +243,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
     }
 
-    private void AddFitnessRatings(List<NeuralCarInputSource> cars, double[] fitness)
+    private void AddFitnessRatings(double[] fitness)
     {
         var fastestFinish = 0.0;
         var slowestFinish = 0.0;
@@ -245,28 +251,33 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
         try
         {
-            fastestFinish = cars.Where(car => car.LapFinishTime.HasValue).Min(car => car.LapFinishTime.Value);
-            slowestFinish = cars.Where(car => car.LapFinishTime.HasValue).Max(car => car.LapFinishTime.Value);
+            fastestFinish = _neuralCars.Where(car => car.LapFinishTime.HasValue).Min(car => car.LapFinishTime.Value);
+            slowestFinish = _neuralCars.Where(car => car.LapFinishTime.HasValue).Max(car => car.LapFinishTime.Value);
             fastestSlowestDelta = slowestFinish - fastestFinish;
         }
         catch { }
 
         var rateFinishTime = fastestSlowestDelta > 0.0 && // TODO: Make the 0.1f below configurable
-                             cars.Count(car => car.LapFinishTime.HasValue) > Mathf.RoundToInt(0.1f * Population.Size);
+                             _neuralCars.Count(car => car.LapFinishTime.HasValue) > Mathf.RoundToInt(0.1f * Population.Size);
 
-        for (int i = 0; i < cars.Count; i++)
+        for (int i = 0; i < _neuralCars.Count; i++)
         {
-            var added = (double)cars[i].Checkpoint / (double)CheckpointGenerator.NUM_CHECKPOINTS;
+            var added = (double)_neuralCars[i].Checkpoint / (double)CheckpointGenerator.NUM_CHECKPOINTS;
 
-            if (cars[i].LapFinishTime.HasValue && rateFinishTime)
+            if (_neuralCars[i].LapFinishTime.HasValue)
             {
-                added += 0.5 * (1.0 - (cars[i].LapFinishTime.Value - fastestFinish) / fastestSlowestDelta);
+                if (rateFinishTime)
+                {
+                    added += 0.5 * (1.0 - (_neuralCars[i].LapFinishTime.Value - fastestFinish) / fastestSlowestDelta);
+                }
+
+                added += _flatFinishBonus;
             }
 
             // Square fitness (per track) for faster learning
             added *= added;
 
-            fitness[i] = added;
+            fitness[i] += added;
         }
     }
 
@@ -283,7 +294,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         _neuralCarPrefab.SetActive(false);
         var cars = Enumerable.Range(0, (int)Population.Size).Select(idx =>
         {
-            var go = Instantiate(_neuralCarPrefab);
+            var go = Instantiate(_neuralCarPrefab, transform);
 
             var inputSource = go.GetComponent<NeuralCarInputSource>();
             inputSource.Initialize(this, (ulong)idx, _checkpointGenerator, _timer);
@@ -331,13 +342,13 @@ public class NeuralNetworkTrainer : MonoBehaviour
         }
     }
 
-    // Where are my local statics? :(
-    private static int LenienceLastCaluclatedFrame = 0;
-    private double _leniency;
+    private bool _recalculateLeniency = true;
+
+    private double _leniency = 1.0;
 
     private double CalcLeniency()
     {
-        if (Time.frameCount > LenienceLastCaluclatedFrame)
+        if (_recalculateLeniency)
         {
             if (null != _neuralCars)
             {
@@ -349,7 +360,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 _leniency = 1.0;
             }
 
-            LenienceLastCaluclatedFrame = Time.frameCount;
+            _recalculateLeniency = false;
         }
 
         return _leniency;
@@ -365,6 +376,11 @@ public class NeuralNetworkTrainer : MonoBehaviour
             Population?.Dispose();
             Population = null;
         }
+    }
+
+    private void FixedUpdate()
+    {
+        _recalculateLeniency = true;
     }
 
     private void OnDestroy()

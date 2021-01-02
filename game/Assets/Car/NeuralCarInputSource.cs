@@ -97,6 +97,14 @@ namespace Assets.Car
             GetComponent<SpawnOnStartLine>().Respawn();
         }
 
+        /// <summary>
+        /// Scales the input so that is is 0 in generation <see cref="minGeneration"/> and before, and 1 in generation <see cref="maxGeneration"/>
+        /// </summary>
+        private double ScaleInputWithGeneration(double value, int minGeneration, int maxGeneration)
+        {
+            return value * Mathf.Clamp01((float)(_trainer.Generation - minGeneration) / (float)(maxGeneration - minGeneration));
+        }
+
         private void FixedUpdate()
         {
             if (!IsActive)
@@ -124,35 +132,35 @@ namespace Assets.Car
                 _inputs[idx++] = _visionSource.FrontRight;
                 _inputs[idx++] = _visionSource.Right;
 
-                // Signed distance to center line when driving straight (1)
-                _inputs[idx++] = _visionSource.Right - _visionSource.Left;
-
                 // Signed velocity (1)
-                _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up);
+                _inputs[idx++] = ScaleInputWithGeneration(Vector3.Dot(_rigidbody2D.velocity, transform.up), 0, 30);
+
+                // Signed distance to center line when driving straight (1)
+                _inputs[idx++] = ScaleInputWithGeneration(_visionSource.Right - _visionSource.Left, 30, 60);
 
                 // Square velocity (1)
-                _inputs[idx++] = _rigidbody2D.velocity.sqrMagnitude;
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude, 60, 120);
 
                 // 2D Velocity (2)
-                _inputs[idx++] = _rigidbody2D.velocity.x;
-                _inputs[idx++] = _rigidbody2D.velocity.y;
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 90, 150);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 90, 150);
 
                 // Upcoming checkpoint distances (10, 20, 30, 40) (8)
                 var cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 10) - (Vector2)transform.position;
-                _inputs[idx++] = cpDistance.x;
-                _inputs[idx++] = cpDistance.y;
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
 
                 cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 20) - (Vector2)transform.position;
-                _inputs[idx++] = cpDistance.x;
-                _inputs[idx++] = cpDistance.y;
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
 
                 cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 30) - (Vector2)transform.position;
-                _inputs[idx++] = cpDistance.x;
-                _inputs[idx++] = cpDistance.y;
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
 
                 cpDistance = _checkpointGenerator.GetCheckpointPos(Checkpoint + 40) - (Vector2)transform.position;
-                _inputs[idx++] = cpDistance.x;
-                _inputs[idx++] = cpDistance.y;
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.x, 100, 250);
+                _inputs[idx++] = ScaleInputWithGeneration(cpDistance.y, 100, 250);
             }
             catch { }
 
