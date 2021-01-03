@@ -22,7 +22,7 @@ public class LoopedPolygonSpline : ILoopedSpline
     /// Corners must not coincide, including the first and last one.
     /// The loop is closed internally.
     /// </summary>
-    public LoopedPolygonSpline(IList<Vector2> corners)
+    public LoopedPolygonSpline(List<Vector2> corners)
     {
         if (corners.Count < 3)
         {

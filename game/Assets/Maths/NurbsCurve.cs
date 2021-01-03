@@ -38,7 +38,7 @@ namespace Assets.Maths
             _n = n;
         }
 
-        public static NurbsCurve Generate(IList<Vector2> controlPoints, IList<float> weights, int degree)
+        public static NurbsCurve Generate(IList<Vector2> controlPoints, IList<float> weights, int degree, bool reverse = false)
         {
             if (controlPoints.Count < 2)
             {
@@ -62,6 +62,12 @@ namespace Assets.Maths
 
             var cp = controlPoints.Skip(controlPoints.Count - degree).Concat(controlPoints.Concat(controlPoints.Take(degree))).ToArray();
             var wg = weights.Skip(weights.Count - degree).Concat(weights.Concat(weights.Take(degree))).ToArray();
+
+            if (reverse)
+            {
+                cp = cp.Reverse().ToArray();
+                wg = wg.Reverse().ToArray();
+            }
 
             var knotCount = cp.Length + degree + 1;
             var knots = Enumerable.Range(0, knotCount).Select(i => (float) i / (float) (knotCount - 1)).ToArray();

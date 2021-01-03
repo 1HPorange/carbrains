@@ -26,7 +26,7 @@ public class MooreCurve
         _points = points;
     }
 
-    public IList<Vector2> Points => _points;
+    public List<Vector2> Points => _points;
 
     public Vector2 Evaluate(float t)
     {

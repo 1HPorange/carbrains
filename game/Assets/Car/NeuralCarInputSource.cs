@@ -101,6 +101,12 @@ namespace Assets.Car
 
             _visionSource.ResetAge();
 
+            for (int i = 2; i < _outputs.Length; i++)
+            {
+                // Reset feedback outputs/inputs
+                _outputs[i] = 0.0;
+            }
+
             GetComponent<SpawnOnStartLine>().Respawn();
         }
 
@@ -151,9 +157,16 @@ namespace Assets.Car
                     _inputs[idx++] = ScaleInputWithGeneration(pos.x, 120, 180);
                     _inputs[idx++] = ScaleInputWithGeneration(pos.y, 120, 180);
                 }
+
+                // For every output with an index larger than two (speed and steering are the first two),
+                // feed it back into the network as an input
+                for (int i = 0; i < _outputs.Length - 2; i++)
+                {
+                    _inputs[idx++] = ScaleInputWithGeneration(_outputs[i + 2], 180, 240);
+                }
+
             }
             catch { }
-
 
             _trainer.Population.EvaluateMember(_memberIndex, _inputs, _outputs);
 

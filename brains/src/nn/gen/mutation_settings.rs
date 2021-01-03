@@ -15,12 +15,12 @@ impl Default for MutationSettingsTemplate {
     fn default() -> Self {
         MutationSettingsTemplate {
             mutation_probability: 0.75,
-            min_weights_affected_ratio: 0.0,
+            min_weights_affected_ratio: 0.05,
             max_weights_affected_ratio: 0.25,
             methods: vec![
                 MutationMethodProbability {
                     method: MutationMethod::Invert,
-                    relative_probability: 0.5,
+                    relative_probability: 1.0,
                 },
                 MutationMethodProbability {
                     method: MutationMethod::Replace(-2.0, 2.0),
@@ -31,8 +31,12 @@ impl Default for MutationSettingsTemplate {
                     relative_probability: 4.0,
                 },
                 MutationMethodProbability {
+                    method: MutationMethod::Shift(-0.2, 0.2),
+                    relative_probability: 24.0,
+                },
+                MutationMethodProbability {
                     method: MutationMethod::Shift(-2.0, 2.0),
-                    relative_probability: 2.0,
+                    relative_probability: 4.0,
                 },
             ],
         }

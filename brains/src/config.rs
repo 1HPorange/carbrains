@@ -27,10 +27,10 @@ pub struct ConfigTemplate {
 impl Default for ConfigTemplate {
     fn default() -> Self {
         ConfigTemplate {
-            population_size: 500,
-            min_weight: -1.0,
-            max_weight: 1.0,
-            elitism: 0.02,
+            population_size: 100,
+            min_weight: -2.0,
+            max_weight: 2.0,
+            elitism: 0.05,
             network: Default::default(),
             selection_method: Default::default(),
             crossover: Default::default(),

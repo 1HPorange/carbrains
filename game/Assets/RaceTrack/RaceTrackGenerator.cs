@@ -111,7 +111,7 @@ public class RaceTrackGenerator : MonoBehaviour
             .Select(_ => _randomNodeWeights ? Random.Range(_minNodeWeight, _maxNodeWeight) : 1f)
             .ToList();
         
-        _racetrack = NurbsCurve.Generate(moorePoints, controlPointWeights, _splineDegree);
+        _racetrack = NurbsCurve.Generate(moorePoints, controlPointWeights, _splineDegree, (seed & 1) == 1);
     }
 
     public Vector2 GetScale()
