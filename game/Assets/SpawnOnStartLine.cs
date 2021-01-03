@@ -35,12 +35,5 @@ public class SpawnOnStartLine : MonoBehaviour
     {
         transform.position = _startPos;
         transform.rotation = _orientation;
-
-        var rb2d = GetComponent<Rigidbody2D>();
-
-        if (null != rb2d)
-        {
-            rb2d.velocity = Vector2.zero;
-        }
     }
 }

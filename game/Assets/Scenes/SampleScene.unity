@@ -4849,6 +4849,7 @@ MonoBehaviour:
     type: 3}
   _checkpointGenerator: {fileID: 1363228453}
   _timer: {fileID: 417862757}
+  _boundaryGenerator: {fileID: 1557523894}
   _flatFinishBonus: 0.2
 --- !u!1 &1148010994
 GameObject:

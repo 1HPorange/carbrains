@@ -29,6 +29,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     [SerializeField] private LongRunningTimer _timer = default;
 
+    [SerializeField] private RaceTrackBoundaryGenerator _boundaryGenerator = default;
+
     [SerializeField] private double _flatFinishBonus = 0.2;
 
     // Internals
@@ -125,6 +127,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
         Assert.IsTrue(TrackSeeds.Length > 0);
         Assert.IsNotNull(Population);
         Assert.IsNotNull(_timer);
+        Assert.IsNotNull(_boundaryGenerator);
 
         _neuralCars = SpawnCars();
 
@@ -177,9 +180,12 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 _timer.Reset();
                 _lapStart = _timer.Now;
 
-                _neuralCars.ForEach(car => car.ResetRun());
-
                 ReculculateLeniency();
+
+                // Give the colliders some time to settle
+                yield return new WaitUntil(() => _boundaryGenerator.HasSettled);
+
+                _neuralCars.ForEach(car => car.ResetRun());
 
                 // Run the simulation for the current track
                 // -------------------------------------------------------------------------

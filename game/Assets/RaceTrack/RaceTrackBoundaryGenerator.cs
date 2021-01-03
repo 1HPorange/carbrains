@@ -15,6 +15,8 @@ public class RaceTrackBoundaryGenerator : MonoBehaviour
     [SerializeField]
     private EdgeCollider2D _outer = default, _inner = default;
 
+    public bool HasSettled { get; private set; } = false;
+
     private void OnEnable()
     {
         _contourExtractor.OnOuterInnerContoursExtracted.AddListener(CreateEdgeColliders);
@@ -32,7 +34,12 @@ public class RaceTrackBoundaryGenerator : MonoBehaviour
 
         if (_inner.bounds.size == Vector3.zero || _outer.bounds.size == Vector3.zero)
         {
+            HasSettled = false;
             OnColliderGenFailed.Invoke();
+        }
+        else
+        {
+            HasSettled = true;
         }
     }
 }
