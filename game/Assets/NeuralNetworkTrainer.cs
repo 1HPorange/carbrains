@@ -357,7 +357,8 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private void UpdateTrackRecord()
     {
-        if (FastestLapTime.HasValue && FastestLapTime.Value < (_trackRecords[TrackIndex] ?? TimeSpan.MaxValue))
+        if (FastestLapTime.HasValue && FastestLapTime.Value < (_trackRecords[TrackIndex] ?? TimeSpan.MaxValue) 
+                                    && _trackSeeds?[TrackIndex] != null) // Fastest laps only make sense for non-random tracks
         {
             _trackRecords[TrackIndex] = FastestLapTime;
         }
@@ -397,8 +398,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private TimeSpan? CalcFastestLapTime()
     {
-        // Fastest laptimes only make sense for tracks that are not randomly generated
-        if (_lapStart.HasValue && _trackSeeds?[TrackIndex] != null)
+        if (_lapStart.HasValue)
         {
             try
             {

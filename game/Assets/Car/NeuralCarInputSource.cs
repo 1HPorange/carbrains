@@ -155,14 +155,14 @@ namespace Assets.Car
                 }
 
                 // 2D Velocity (2)
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 150, 180);
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 150, 180);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 90, 150);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 90, 150);
 
                 // For every output with an index larger than two (speed and steering are the first two),
                 // feed it back into the network as an input
                 for (int i = 0; i < _outputs.Length - 2; i++)
                 {
-                    _inputs[idx++] = ScaleInputWithGeneration(_outputs[i + 2], 180, 240);
+                    _inputs[idx++] = ScaleInputWithGeneration(_outputs[i + 2], 150, 210);
                 }
 
             }
