@@ -146,17 +146,17 @@ namespace Assets.Car
                 // Square velocity (1)
                 _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude, 60, 90);
 
-                // 2D Velocity (2)
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 90, 120);
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 90, 120);
-
                 // Upcoming checkpoint distances CHECKPOINT_VISION_OFFSETS.Length * 2
                 foreach (var offset in CHECKPOINT_VISION_OFFSETS)
                 {
                     var pos = GetCheckpointPosLocal(offset);
-                    _inputs[idx++] = ScaleInputWithGeneration(pos.x, 120, 180);
-                    _inputs[idx++] = ScaleInputWithGeneration(pos.y, 120, 180);
+                    _inputs[idx++] = ScaleInputWithGeneration(pos.x, 90, 150);
+                    _inputs[idx++] = ScaleInputWithGeneration(pos.y, 90, 150);
                 }
+
+                // 2D Velocity (2)
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 150, 180);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 150, 180);
 
                 // For every output with an index larger than two (speed and steering are the first two),
                 // feed it back into the network as an input
