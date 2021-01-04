@@ -106,7 +106,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
                 _evolveAfterRound = null != configPath;
             }
 
-            Generation = 1;
+            Generation = (int)Population.LoadedGeneration;
 
             OnPopulationCreated.Invoke();
         }
@@ -152,7 +152,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private void Awake()
     {
-        Generation = 1;
+        Generation = 0;
         NextRoundSpeedup = 1;
         _lapStart = null;
         Leniency = 1.0;

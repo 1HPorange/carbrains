@@ -23,13 +23,18 @@ public class Population : IDisposable
     /// </summary>
     public readonly ulong Outputs;
 
+    /// <summary>
+    /// The Generation that this population had when it was loaded. Starts at 0.
+    /// </summary>
+    public readonly ulong LoadedGeneration;
 
-    private unsafe Population(void* population, ulong size, ulong inputs, ulong outputs)
+    private unsafe Population(void* population, ulong size, ulong inputs, ulong outputs, ulong loadedGeneration)
     {
         _population = population;
         Size = size;
         Inputs = inputs;
         Outputs = outputs;
+        LoadedGeneration = loadedGeneration;
     }
 
     public static Population GenerateFromConfig(string path)
@@ -50,7 +55,7 @@ public class Population : IDisposable
 
             ThrowOnError(() => BrainsDll.build_population_from_config(path, population_ptr, members_ptr, inputs_ptr, outputs_ptr));
 
-            return new Population(population, members, inputs, outputs);
+            return new Population(population, members, inputs, outputs, 0);
         }
     }
 
@@ -70,10 +75,13 @@ public class Population : IDisposable
             ulong outputs;
             ulong* outputs_ptr = &outputs;
 
-            ThrowOnError(() => BrainsDll.load_existing_population(membersPath, configPath, population_ptr, members_ptr, inputs_ptr,
-                outputs_ptr));
+            ulong generation;
+            ulong* generation_ptr = &generation;
 
-            return new Population(population, members, inputs, outputs);
+            ThrowOnError(() => BrainsDll.load_existing_population(membersPath, configPath, population_ptr, members_ptr, inputs_ptr,
+                outputs_ptr, generation_ptr));
+
+            return new Population(population, members, inputs, outputs, generation);
         }
     }
 

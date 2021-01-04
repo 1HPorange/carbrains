@@ -3,6 +3,11 @@ pub mod error;
 pub mod gen;
 pub mod nn;
 
+use config::{Config, ConfigTemplate};
+use error::BrainsError;
+use libc::{c_char, c_double};
+use rand::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::{
     cmp::Ordering,
     ffi::{CStr, CString},
@@ -12,15 +17,12 @@ use std::{
     slice,
 };
 
-use config::{Config, ConfigTemplate};
-use error::BrainsError;
-use libc::{c_char, c_double};
-use nn::NeuralNetwork;
-use rand::prelude::*;
-
+#[derive(Deserialize, Serialize)]
 pub struct Population {
     members: Vec<nn::NeuralNetwork>,
+    #[serde(skip)]
     config: Option<Config>,
+    generation: usize,
 }
 
 static mut LAST_ERROR: Option<CString> = None;
@@ -114,6 +116,7 @@ pub unsafe extern "C" fn build_population_from_config(
     let population_box = Box::new(Population {
         members,
         config: Some(config),
+        generation: 0,
     });
     *population = Box::into_raw(population_box);
 
@@ -125,12 +128,13 @@ pub unsafe extern "C" fn build_population_from_config(
 pub unsafe extern "C" fn load_existing_population(
     members_path: Option<NonNull<c_char>>,
     config_path: Option<NonNull<c_char>>,
-    population: *mut *mut Population,
+    population_ptr: *mut *mut Population,
     count: *mut usize,
     inputs: *mut usize,
     outputs: *mut usize,
+    generation: *mut usize,
 ) -> BrainsError {
-    let members_path = match members_path {
+    let population_path = match members_path {
         Some(p) => match CStr::from_ptr(p.as_ptr()).to_str() {
             Ok(p) => p,
             Err(e) => return with_last_error_extended(BrainsError::PopulationPathInvalid, e),
@@ -138,30 +142,32 @@ pub unsafe extern "C" fn load_existing_population(
         None => return with_last_error(BrainsError::PopulationPathNull),
     };
 
-    let members_json = match fs::read_to_string(members_path) {
+    let population_json = match fs::read_to_string(population_path) {
         Ok(j) => j,
         Err(e) => return with_last_error_extended(BrainsError::CannotReadMembersFile, e),
     };
 
-    let members: Vec<NeuralNetwork> = match serde_json::from_str(&members_json) {
+    let mut population: Population = match serde_json::from_str(&population_json) {
         Ok(m) => m,
         Err(e) => return with_last_error_extended(BrainsError::InvalidMembersJson, e),
     };
 
-    if members.is_empty() {
+    if population.members.is_empty() {
         return with_last_error(BrainsError::PopulationSizeZero);
     }
 
-    if !members
+    if !population
+        .members
         .iter()
-        .all(|nn| nn.input_count() == members[0].input_count())
+        .all(|nn| nn.input_count() == population.members[0].input_count())
     {
         return with_last_error(BrainsError::InconsistentNetworkInputCounts);
     }
 
-    if !members
+    if !population
+        .members
         .iter()
-        .all(|nn| nn.output_count() == members[0].output_count())
+        .all(|nn| nn.output_count() == population.members[0].output_count())
     {
         return with_last_error(BrainsError::InconsistentNetworkOutputCounts);
     }
@@ -193,18 +199,20 @@ pub unsafe extern "C" fn load_existing_population(
 
     if !config
         .as_ref()
-        .map(|c| c.network().is_structurally_equal(&members[0]))
+        .map(|c| c.network().is_structurally_equal(&population.members[0]))
         .unwrap_or(true)
     {
         return with_last_error(BrainsError::PopulationConfigMismatch);
     }
 
-    *count = members.len();
-    *inputs = members[0].input_count();
-    *outputs = members[0].output_count();
+    *count = population.members.len();
+    *inputs = population.members[0].input_count();
+    *outputs = population.members[0].output_count();
+    *generation = population.generation;
 
-    let population_box = Box::new(Population { members, config });
-    *population = Box::into_raw(population_box);
+    population.config = config;
+    let population_box = Box::new(population);
+    *population_ptr = Box::into_raw(population_box);
 
     BrainsError::None
 }
@@ -273,6 +281,8 @@ pub unsafe extern "C" fn evolve_population(
         nn::gen::mutate,
         config.mutation_settings(),
     );
+
+    population.generation += 1;
 
     // Also drops the old vector
     population.members = next_gen;
