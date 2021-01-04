@@ -112,6 +112,8 @@ namespace Assets.Car
 
         public void AdvanceTimestep()
         {
+            const float MAX_SPEED = 3.899998f;
+
             if (!IsActive)
             {
                 return;
@@ -131,32 +133,33 @@ namespace Assets.Car
                 // Vision (5)
                 _visionSource.Recalculate();
 
-                _inputs[idx++] = _visionSource.Left;
-                _inputs[idx++] = _visionSource.FrontLeft;
-                _inputs[idx++] = _visionSource.Front;
-                _inputs[idx++] = _visionSource.FrontRight;
-                _inputs[idx++] = _visionSource.Right;
+                _inputs[idx++] = _visionSource.Left / RaceTrackGenerator.DIAMETER;
+                _inputs[idx++] = _visionSource.FrontLeft / RaceTrackGenerator.DIAMETER;
+                _inputs[idx++] = _visionSource.Front / RaceTrackGenerator.DIAMETER;
+                _inputs[idx++] = _visionSource.FrontRight / RaceTrackGenerator.DIAMETER;
+                _inputs[idx++] = _visionSource.Right / RaceTrackGenerator.DIAMETER;
 
                 // Signed velocity (1)
-                _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up);
+                _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up) / MAX_SPEED;
 
                 // Signed distance to center line when driving straight (1)
                 _inputs[idx++] = _visionSource.Right - _visionSource.Left;
 
                 // Square velocity (1)
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude, 60, 90);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude / (MAX_SPEED * MAX_SPEED), 60, 90);
 
                 // Upcoming checkpoint distances CHECKPOINT_VISION_OFFSETS.Length * 2
                 foreach (var offset in CHECKPOINT_VISION_OFFSETS)
                 {
-                    var pos = GetCheckpointPosLocal(offset);
+                    var pos = GetCheckpointPosLocal(offset) / RaceTrackGenerator.RADIUS;
                     _inputs[idx++] = ScaleInputWithGeneration(pos.x, 90, 150);
                     _inputs[idx++] = ScaleInputWithGeneration(pos.y, 90, 150);
                 }
 
                 // 2D Velocity (2)
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 90, 150);
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 90, 150);
+                var velocity = 
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x / MAX_SPEED, 90, 150);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y / MAX_SPEED, 90, 150);
 
                 // For every output with an index larger than two (speed and steering are the first two),
                 // feed it back into the network as an input

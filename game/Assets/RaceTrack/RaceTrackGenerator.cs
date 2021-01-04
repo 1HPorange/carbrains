@@ -11,12 +11,13 @@ using Random = UnityEngine.Random;
 
 public class RaceTrackGenerator : MonoBehaviour
 {
+    public const float RADIUS = 5f;
+    public const float DIAMETER = 2f * RADIUS;
+
     [Serializable]
     public class RaceTrackGeneratedEvent : UnityEvent<ILoopedSpline> { }
 
     public RaceTrackGeneratedEvent RaceTrackGenerated;
-
-    [SerializeField] private Vector2 _scale = Vector2.one * 10f;
 
     [SerializeField]
     private int _mooreDegree = 2;
@@ -80,7 +81,6 @@ public class RaceTrackGenerator : MonoBehaviour
 
     private void GenerateInternal(int seed)
     {
-        Assert.IsTrue(_scale.x > 0f && _scale.y > 0f);
         Assert.IsTrue(_mooreDegree >= 0);
         Assert.IsTrue(_minSkip >= 1 && _minSkip <= _maxSkip);
         Assert.IsTrue(_maxSkip < int.MaxValue);
@@ -107,7 +107,7 @@ public class RaceTrackGenerator : MonoBehaviour
 
         for (int i = 0; i < moorePoints.Count; i++)
         {
-            moorePoints[i] *= _scale;
+            moorePoints[i] *= DIAMETER;
         }
 
         if (!_makeSpline)
@@ -122,10 +122,5 @@ public class RaceTrackGenerator : MonoBehaviour
             .ToList();
         
         _racetrack = NurbsCurve.Generate(moorePoints, controlPointWeights, _splineDegree, (seed & 1) == 1);
-    }
-
-    public Vector2 GetScale()
-    {
-        return _scale;
     }
 }
