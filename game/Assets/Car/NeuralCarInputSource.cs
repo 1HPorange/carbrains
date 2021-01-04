@@ -130,25 +130,29 @@ namespace Assets.Car
             {
                 var idx = 0;
 
-                // Vision (5)
+                // Vision and scaling constant (6)
                 _visionSource.Recalculate();
 
-                _inputs[idx++] = _visionSource.Left;
-                _inputs[idx++] = _visionSource.FrontLeft;
-                _inputs[idx++] = _visionSource.Front;
-                _inputs[idx++] = _visionSource.FrontRight;
-                _inputs[idx++] = _visionSource.Right;
+                _inputs[idx++] = _visionSource.Left / RaceTrackGenerator.RADIUS;
+                _inputs[idx++] = _visionSource.FrontLeft / RaceTrackGenerator.RADIUS;
+                _inputs[idx++] = _visionSource.Front / RaceTrackGenerator.RADIUS;
+                _inputs[idx++] = _visionSource.FrontRight / RaceTrackGenerator.RADIUS;
+                _inputs[idx++] = _visionSource.Right / RaceTrackGenerator.RADIUS;
 
-                // Signed velocity (1)
+                _inputs[idx++] = RaceTrackGenerator.RADIUS;
+
+                // Signed velocity and scaling constant (2)
                 _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up) / MAX_SPEED;
+                _inputs[idx++] = MAX_SPEED;
 
                 // Signed distance to center line when driving straight (1)
                 _inputs[idx++] = _visionSource.Right - _visionSource.Left;
 
-                // Square velocity (1)
+                // Square velocity and scaling constant (2)
                 _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.sqrMagnitude / (MAX_SPEED * MAX_SPEED), 60, 90);
+                _inputs[idx++] = ScaleInputWithGeneration(MAX_SPEED * MAX_SPEED, 60, 90);
 
-                // Upcoming checkpoint distances CHECKPOINT_VISION_OFFSETS.Length * 2
+                // Upcoming checkpoint distances (CHECKPOINT_VISION_OFFSETS.Length * 2)
                 foreach (var offset in CHECKPOINT_VISION_OFFSETS)
                 {
                     var pos = GetCheckpointPosLocal(offset) / RaceTrackGenerator.RADIUS;
@@ -157,8 +161,8 @@ namespace Assets.Car
                 }
 
                 // 2D Velocity (2)
-                var velocity = 
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x / MAX_SPEED, 90, 150);
+                var velocity =
+                    _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x / MAX_SPEED, 90, 150);
                 _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y / MAX_SPEED, 90, 150);
 
                 // For every output with an index larger than two (speed and steering are the first two),
@@ -169,7 +173,10 @@ namespace Assets.Car
                 }
 
             }
-            catch { }
+            catch
+            {
+                // TODO: Think about some kind of warning here
+            }
 
             _trainer.Population.EvaluateMember(_memberIndex, _inputs, _outputs);
 

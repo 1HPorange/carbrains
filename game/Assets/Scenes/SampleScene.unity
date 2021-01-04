@@ -5765,7 +5765,6 @@ MonoBehaviour:
   RaceTrackGenerated:
     m_PersistentCalls:
       m_Calls: []
-  _scale: {x: 10, y: 10}
   _mooreDegree: 2
   _minSkip: 3
   _maxSkip: 7

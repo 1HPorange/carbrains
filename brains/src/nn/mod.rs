@@ -18,7 +18,7 @@ pub struct NeuralNetworkTemplate {
 impl Default for NeuralNetworkTemplate {
     fn default() -> Self {
         NeuralNetworkTemplate {
-            input_count: 23,
+            input_count: 25,
             layers: vec![
                 vec![
                     Activation::TanH,
