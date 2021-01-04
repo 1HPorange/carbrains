@@ -133,11 +133,11 @@ namespace Assets.Car
                 // Vision (5)
                 _visionSource.Recalculate();
 
-                _inputs[idx++] = _visionSource.Left / RaceTrackGenerator.DIAMETER;
-                _inputs[idx++] = _visionSource.FrontLeft / RaceTrackGenerator.DIAMETER;
-                _inputs[idx++] = _visionSource.Front / RaceTrackGenerator.DIAMETER;
-                _inputs[idx++] = _visionSource.FrontRight / RaceTrackGenerator.DIAMETER;
-                _inputs[idx++] = _visionSource.Right / RaceTrackGenerator.DIAMETER;
+                _inputs[idx++] = _visionSource.Left;
+                _inputs[idx++] = _visionSource.FrontLeft;
+                _inputs[idx++] = _visionSource.Front;
+                _inputs[idx++] = _visionSource.FrontRight;
+                _inputs[idx++] = _visionSource.Right;
 
                 // Signed velocity (1)
                 _inputs[idx++] = Vector3.Dot(_rigidbody2D.velocity, transform.up) / MAX_SPEED;
