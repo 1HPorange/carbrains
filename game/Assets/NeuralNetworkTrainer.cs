@@ -41,7 +41,7 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private double? _lapStart;
 
-    private TimeSpan?[] _trackRecords;
+    private Dictionary<NullObject<int?>, TimeSpan?> _trackRecords;
 
     // Publics
 
@@ -80,12 +80,12 @@ public class NeuralNetworkTrainer : MonoBehaviour
     {
         get => _trackSeeds;
         set {
-            _trackRecords = new TimeSpan?[value.Length];
+            _trackRecords = value.Distinct().ToDictionary(key => (NullObject<int?>)key, val => (TimeSpan?)null);
             _trackSeeds = value;
         }
     }
 
-    public TimeSpan? CurrentTrackRecord => _trackRecords?[TrackIndex];
+    public TimeSpan? CurrentTrackRecord => _trackRecords?[_trackSeeds[TrackIndex]];
 
     public void CreatePopulation(string configPath, string populationPath)
     {
@@ -357,10 +357,20 @@ public class NeuralNetworkTrainer : MonoBehaviour
 
     private void UpdateTrackRecord()
     {
-        if (FastestLapTime.HasValue && FastestLapTime.Value < (_trackRecords[TrackIndex] ?? TimeSpan.MaxValue) 
-                                    && _trackSeeds?[TrackIndex] != null) // Fastest laps only make sense for non-random tracks
+        if (FastestLapTime.HasValue)
         {
-            _trackRecords[TrackIndex] = FastestLapTime;
+            if (null == _trackSeeds[TrackIndex])
+            {
+                // For random tracks, we take a rolling average of the best times
+                // TODO: Make sensitivity configurable
+                var prior = _trackRecords[_trackSeeds[TrackIndex]] ?? FastestLapTime.Value;
+                _trackRecords[_trackSeeds[TrackIndex]] = TimeSpan.FromSeconds(prior.TotalSeconds * 0.8 + FastestLapTime.Value.TotalSeconds * 0.2);
+            }
+            else if (FastestLapTime.Value < (_trackRecords[_trackSeeds[TrackIndex]] ?? TimeSpan.MaxValue))
+            {
+                // For normal tracks, we just save the fastest time
+                _trackRecords[_trackSeeds[TrackIndex]] = FastestLapTime;
+            }
         }
     }
 
