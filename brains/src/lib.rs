@@ -343,9 +343,16 @@ pub unsafe extern "C" fn save_top_n(
 
     members.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(Ordering::Equal));
 
-    let json = match serde_json::to_string_pretty(
-        &members.iter().take(n).map(|m| &m.0).collect::<Vec<_>>(),
-    ) {
+    let json = match serde_json::to_string_pretty(&Population {
+        members: members
+            .iter()
+            .take(n)
+            .map(|m| &m.0)
+            .cloned()
+            .collect::<Vec<_>>(),
+        generation: population.generation,
+        config: None,
+    }) {
         Ok(j) => j,
         Err(e) => {
             return with_last_error_extended(BrainsError::InternalError, e);
@@ -380,7 +387,7 @@ pub unsafe extern "C" fn save_all(
         None => return with_last_error(BrainsError::PopulationPointerNull),
     };
 
-    let json = match serde_json::to_string_pretty(&population.members) {
+    let json = match serde_json::to_string_pretty(&population) {
         Ok(j) => j,
         Err(e) => {
             return with_last_error_extended(BrainsError::InternalError, e);
