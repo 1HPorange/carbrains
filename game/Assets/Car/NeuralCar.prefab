@@ -131,7 +131,7 @@ MonoBehaviour:
   _rayMask:
     serializedVersion: 2
     m_Bits: 256
-  SkipFrames: 3
+  SkipFrames: 0
 --- !u!114 &-1198570366690904253
 MonoBehaviour:
   m_ObjectHideFlags: 0

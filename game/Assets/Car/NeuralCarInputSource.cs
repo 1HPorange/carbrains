@@ -144,23 +144,23 @@ namespace Assets.Car
                 _inputs[idx++] = _visionSource.Right - _visionSource.Left;
 
                 // Upcoming checkpoint distances (CHECKPOINT_VISION_OFFSETS.Length * 2)
-                foreach (var offset in CHECKPOINT_VISION_OFFSETS)
+                for (int i = 0; i < CHECKPOINT_VISION_OFFSETS.Length; i++)
                 {
-                    var pos = GetCheckpointPosLocal(offset);
-                    _inputs[idx++] = ScaleInputWithGeneration(pos.x, 25, 75);
-                    _inputs[idx++] = ScaleInputWithGeneration(pos.y, 25, 75);
+                    var pos = GetCheckpointPosLocal(CHECKPOINT_VISION_OFFSETS[i]);
+                    _inputs[idx++] = ScaleInputWithGeneration(pos.x, 60 + i * 30, 120 + i * 30);
+                    _inputs[idx++] = ScaleInputWithGeneration(pos.y, 60 + i * 30, 120 + i * 30);
                 }
 
                 // 2D Velocity (2)
                 var velocity =
-                    _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 50, 100);
-                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 50, 100);
+                    _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.x, 35, 60);
+                _inputs[idx++] = ScaleInputWithGeneration(_rigidbody2D.velocity.y, 35, 60);
 
                 // For every output with an index larger than two (speed and steering are the first two),
                 // feed it back into the network as an input
                 for (int i = 0; i < _outputs.Length - 2; i++)
                 {
-                    _inputs[idx++] = ScaleInputWithGeneration(_outputs[i + 2], 100, 150);
+                    _inputs[idx++] = ScaleInputWithGeneration(_outputs[i + 2], 120, 180);
                 }
             }
             catch
